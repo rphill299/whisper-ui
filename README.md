@@ -10,3 +10,4 @@ Front end:
 Back end:
 - python
 - flask
+- flask-cors
