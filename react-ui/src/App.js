@@ -18,7 +18,7 @@ function App() {
 
     /* ==========================================
         Handling communication with backend here
-    */ ==========================================
+     ========================================== */
     function handleTranscribeButtonClick() {
         setOutputHeader('Transcribing ' + file.name + ' to ' + language + ':')
 
