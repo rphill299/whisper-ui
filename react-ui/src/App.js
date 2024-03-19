@@ -18,11 +18,12 @@ function App() {
 
     /* ==========================================
         Handling communication with backend here
-    */ ==========================================
+       ==========================================
+    */
     function handleTranscribeButtonClick() {
         setOutputHeader('Transcribing ' + file.name + ' to ' + language + ':')
 
-        axios.get('/test/', {params:{'name':'Ryan Hill'}})
+        axios.get('/test/', {params:{'name':file.name}})
         .then((response) => {
             const data = response.data
             setOutput(data.result)
