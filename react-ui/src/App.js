@@ -23,8 +23,15 @@ function App() {
     function handleTranscribeButtonClick() {
         setOutputHeader('Transcribing ' + file.name + ' to ' + language + ':')
 
-        axios.get('/test/', {params:{'name':file.name}})
-        .then((response) => {
+        const formData = new FormData();
+
+        formData.append("file", file);
+
+        axios.post('/test/', formData, {
+		headers: {
+			'Content-Type': 'multipart/form-data'
+		}
+	}).then((response) => {
             const data = response.data
             setOutput(data.result)
         }).catch((error) => {
