@@ -1,0 +1,11 @@
+# ignore max system files
+.DS_Store
+
+# ignore node_modules folder
+node_modules
+
+#ignore python v.envs
+.venv
+
+#ignore python bytecode
+__pycache__
