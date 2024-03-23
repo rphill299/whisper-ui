@@ -27,7 +27,7 @@ function App() {
 
         formData.append("file", file);
 
-        axios.post('/test/', formData, {
+        axios.post('/wav2vec2test/', formData, {
 		headers: {
 			'Content-Type': 'multipart/form-data'
 		}
