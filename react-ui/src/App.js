@@ -34,14 +34,38 @@ function App() {
     }
 
     /* ==========================================
-        Handling main communication with backend here
-     ========================================== */
+
+        Handling communication with backend here
+       ==========================================
+    */
     function handleTranscribeButtonClick() {
         if (!file) {
             alert("You must select a file to transcribe.")
             return
         }
 
+
+        const formData = new FormData();
+
+        formData.append("file", file);
+
+        axios.post('/wav2vec2test/', formData, {
+          headers: {
+            'Content-Type': 'multipart/form-data'
+          }
+        }).then((response) => {
+          const data = response.data
+            const status = data.status
+            if (status === 0) {
+                const nl = NewlineText(data.transcript)
+                setOutputHeader('Transcribing ' + file.name + ' to ' + language + ':')
+                setOutput(nl)
+            } else {
+               alert(status + "\nEnsure you entered your directory correctly.") 
+            }
+
+        }).catch((error) => {handleNetworkErrors(error)})
+          
         axios.get('/transcribe/', {params:{'folder':inputDataFolder, 'filename':file.name}})
         .then((response) => {
             const data = response.data

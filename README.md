@@ -23,3 +23,5 @@ This script automatically downloads the following (node packages go into react-u
 - concurrently (node)
 - flask (python)
 - flask-cors (python)
+- torch
+- torchaudio
