@@ -70,7 +70,7 @@ function App() {
                 const data = response.data
                 const status = data.status
                 if (status === 0) {
-                    const nl = NewlineText(data.transcript)
+                    const nl = NewlineText(data.transcript.text)
                     setOutputHeader('Transcribing ' + file.name + ' to ' + language + ':')
                     setOutput(nl)
                 } else {

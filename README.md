@@ -13,6 +13,7 @@ To download and run our code, the user must:
 - Node.js
 - python3
 - pip3 (if not included in your python3 download)
+- ffmpeg
 2. Navigate to our main project directory (Audio-Analyzer-and-Transcription-Tool) and run
 - sh scripts/setup.sh (macOS/Linux)
 - TODO: make Windows setup script
@@ -31,3 +32,4 @@ Python3 installs:
 - python-dotenv
 - torch
 - torchaudio
+- openai-whisper

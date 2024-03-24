@@ -9,11 +9,11 @@
 
 cd ./react-ui
 # general installs
-npm install 
+[ -d node_modules ] || npm install 
 # install axios for communication with backend
-npm install axios
+[ -d node_modules/axios ] || npm install axios
 # install concurrently for running backend and frontend at same time in same terminal session
-npm install concurrently
+[ -d node_modules/concurrently ] || npm install concurrently
 cd ../
 
 
@@ -25,7 +25,7 @@ python3 -m venv .venv
 # activate virtual environment
 source .venv/bin/activate
 # install flask and flask-cors in v.env.
-python3 -m pip install numpy flask flask-cors python-dotenv torch torchaudio
+python3 -m pip install -U numpy flask flask-cors python-dotenv torch torchaudio openai-whisper
 # deactivate v.env.
 deactivate
 cd ../../
