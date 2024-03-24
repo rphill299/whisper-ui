@@ -18,10 +18,16 @@ To download and run our code, the user must:
 - TODO: make Windows setup script
 
 This script automatically downloads the following (node packages go into react-ui/node_modules, python packages go into virtual environment created in flask-backend/src/):
-- general node installs (node)
-- axios (node)
-- concurrently (node)
-- flask (python)
-- flask-cors (python)
+
+Node.js installs:
+- general node installs ("npm install")
+- axios
+- concurrently
+
+Python3 installs:
+- numpy
+- flask
+- flask-cors
+- python-dotenv
 - torch
 - torchaudio

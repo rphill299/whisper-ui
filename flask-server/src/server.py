@@ -10,18 +10,6 @@ app.config['CORS_HEADERS'] = 'Content-Type' #this line may or may not be unneces
 PRINT_TO_CONSOLE = sys.stderr #print to this file within endpoints to print to console
 home = expanduser("~")
 
-
-@app.route('/test/', methods = ['POST'])
-@cross_origin()
-def helloName():
-    print("received request", file=FILE)
-    file = request.files['file']
-   # print(name)
-   # file = request.args.get('file')
-   # file.read()
-    transcript = run(file=file, flag=False)
-    response = {'result':transcript}
-
 # this is called once when the app starts up
 # simply returns a default data folder in the correct formatting of the user's os
 @app.route('/init/')
@@ -34,13 +22,13 @@ def init():
 
 # this is called when the transcribe button is pressed 
 # TODO: modify to accept arguments, or adjust to only be called under some settings
-@app.route('/transcribe/')
+@app.route('/whisper-transcribe/')
 @cross_origin()
-def transcribe():
+def whisper_transcribe():
     inputFolder = request.args.get('folder')
     inputFilename = request.args.get('filename')
     inputFilePath = join(inputFolder, inputFilename)
-    print("received transcribe request for " + inputFilePath, file=PRINT_TO_CONSOLE)
+    print("received whisper transcribe request for " + inputFilePath, file=PRINT_TO_CONSOLE)
 
     inFile = 0
     outFile = 0
@@ -65,3 +53,13 @@ def transcribe():
                 'transcript': transcript}
 
     return response
+
+
+@app.route('/wav2vec2-transcribe/', methods = ['POST'])
+@cross_origin()
+def wav2vec2_transcribe():
+    file = request.files['file']
+    print("received wav2vec2 transcribe request for " + file.filename, file=PRINT_TO_CONSOLE)
+
+    transcript = run(file=file, flag=False)
+    response = {'result':transcript}

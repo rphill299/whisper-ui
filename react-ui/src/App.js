@@ -45,40 +45,40 @@ function App() {
         }
 
 
-        const formData = new FormData();
+        if (language === "English") {
+            const formData = new FormData();
 
-        formData.append("file", file);
+            formData.append("file", file);
 
-        axios.post('/wav2vec2test/', formData, {
-          headers: {
-            'Content-Type': 'multipart/form-data'
-          }
-        }).then((response) => {
-          const data = response.data
-            const status = data.status
-            if (status === 0) {
-                const nl = NewlineText(data.transcript)
-                setOutputHeader('Transcribing ' + file.name + ' to ' + language + ':')
-                setOutput(nl)
-            } else {
-               alert(status + "\nEnsure you entered your directory correctly.") 
-            }
-
-        }).catch((error) => {handleNetworkErrors(error)})
-          
-        axios.get('/transcribe/', {params:{'folder':inputDataFolder, 'filename':file.name}})
-        .then((response) => {
+            axios.post('/wav2vec2-transcribe/', formData, {
+                headers: { 'Content-Type': 'multipart/form-data' }
+            }).then((response) => {
             const data = response.data
-            const status = data.status
-            if (status === 0) {
-                const nl = NewlineText(data.transcript)
-                setOutputHeader('Transcribing ' + file.name + ' to ' + language + ':')
-                setOutput(nl)
-            } else {
-               alert(status + "\nEnsure you entered your directory correctly.") 
-            }
-            
-        }).catch((error) => {handleNetworkErrors(error)})
+                const status = data.status
+                if (status === 0) {
+                    const nl = NewlineText(data.transcript)
+                    setOutputHeader('Transcribing ' + file.name + ' to ' + language + ':')
+                    setOutput(nl)
+                } else {
+                alert(status + "\nEnsure you entered your directory correctly.") 
+                }
+
+            }).catch((error) => {handleNetworkErrors(error)})
+        } else {
+            axios.get('/whisper-transcribe/', {params:{'folder':inputDataFolder, 'filename':file.name}})
+            .then((response) => {
+                const data = response.data
+                const status = data.status
+                if (status === 0) {
+                    const nl = NewlineText(data.transcript)
+                    setOutputHeader('Transcribing ' + file.name + ' to ' + language + ':')
+                    setOutput(nl)
+                } else {
+                alert(status + "\nEnsure you entered your directory correctly.") 
+                }
+                
+            }).catch((error) => {handleNetworkErrors(error)})
+        }
     }
 
     function NewlineText(text) {
