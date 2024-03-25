@@ -33,3 +33,4 @@ Python3 installs:
 - torch
 - torchaudio
 - openai-whisper
+- soundfile

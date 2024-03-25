@@ -25,7 +25,7 @@ python3 -m venv .venv
 # activate virtual environment
 source .venv/bin/activate
 # install flask and flask-cors in v.env.
-python3 -m pip install -U numpy flask flask-cors python-dotenv torch torchaudio openai-whisper
+python3 -m pip install -U numpy flask flask-cors python-dotenv torch torchaudio openai-whisper soundfile
 # deactivate v.env.
 deactivate
 cd ../../
