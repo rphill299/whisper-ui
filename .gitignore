@@ -6,6 +6,7 @@ node_modules
 
 #ignore python v.envs
 .venv
+venv
 
 #ignore python bytecode
 __pycache__

@@ -12,7 +12,7 @@ app.config['CORS_HEADERS'] = 'Content-Type' #this line may or may not be unneces
 PRINT_TO_CONSOLE = sys.stderr #print to this file within endpoints to print to console
 HOME_DIR = expanduser("~")
 
-model = whisper.load_model("base")
+# model = whisper.load_model("base")
 
 # this is called once when the app starts up
 # simply returns a default data folder in the correct formatting of the user's os
@@ -49,4 +49,6 @@ def wav2vec2_transcribe():
     print("received wav2vec2 transcribe request for " + file.filename, file=PRINT_TO_CONSOLE)
 
     transcript = run(file=file, flag=False)
-    response = {'result':transcript}
+    response = {'status'    : 0,
+                'transcript':transcript}
+    return response
