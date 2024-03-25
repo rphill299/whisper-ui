@@ -12,7 +12,7 @@ app.config['CORS_HEADERS'] = 'Content-Type' #this line may or may not be unneces
 PRINT_TO_CONSOLE = sys.stderr #print to this file within endpoints to print to console
 HOME_DIR = expanduser("~")
 
-# model = whisper.load_model("base")
+model = whisper.load_model("base")
 
 # this is called once when the app starts up
 # simply returns a default data folder in the correct formatting of the user's os
