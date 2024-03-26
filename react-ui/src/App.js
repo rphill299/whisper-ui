@@ -58,7 +58,7 @@ function App() {
                 const status = data.status
                 if (status === 0) {
                     const nl = NewlineText(data.transcript)
-                    setOutputHeader('Transcribing ' + file.name + ' to ' + language + ':')
+                    setOutputHeader('Transcribing ' + file.name + ' using ' + language + ':')
                     setOutput(nl)
                 } else {
                 alert(status) 
@@ -67,14 +67,13 @@ function App() {
             }).catch((error) => {handleNetworkErrors(error)})
         } 
         else if (language === "Whisper") {
-            const formData = new FormData()
             axios.get('/whisper-transcribe/', {params:{'folder':inputDataFolder, 'filename':file.name}})
             .then((response) => {
                 const data = response.data
                 const status = data.status
                 if (status === 0) {
                     const nl = NewlineText(data.transcript.text)
-                    setOutputHeader('Transcribing ' + file.name + ' to ' + language + ':')
+                    setOutputHeader('Transcribing ' + file.name + ' using ' + language + ':')
                     setOutput(nl)
                 } else {
                 alert(status) 
