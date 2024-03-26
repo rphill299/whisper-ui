@@ -4,7 +4,7 @@ import axios from 'axios'
 
 function App() {
     const [file, setFile] = useState()
-    const [language, setLanguage] = useState('English');
+    const [language, setLanguage] = useState('Whisper');
     const [outputHeader, setOutputHeader] = useState('Choose a file above and click "Transcribe" to transcribe the audio/video file into the desired language');
     const [output, setOutput] = useState()
     const [inputDataFolder, setInputDataFolder] = useState()
@@ -45,7 +45,7 @@ function App() {
         }
 
 
-        if (language === "English") {
+        if (language === "Wav2Vec2") {
             const formData = new FormData();
 
             formData.append("file", file);
@@ -53,18 +53,20 @@ function App() {
             axios.post('/wav2vec2-transcribe/', formData, {
                 headers: { 'Content-Type': 'multipart/form-data' }
             }).then((response) => {
-            const data = response.data
+                const data = response.data
                 const status = data.status
                 if (status === 0) {
                     const nl = NewlineText(data.transcript)
                     setOutputHeader('Transcribing ' + file.name + ' to ' + language + ':')
                     setOutput(nl)
                 } else {
-                alert(status + "\nEnsure you entered your directory correctly.") 
+                alert(status) 
                 }
 
             }).catch((error) => {handleNetworkErrors(error)})
-        } else {
+        } 
+        else if (language === "Whisper") {
+            const formData = new FormData()
             axios.get('/whisper-transcribe/', {params:{'folder':inputDataFolder, 'filename':file.name}})
             .then((response) => {
                 const data = response.data
@@ -74,7 +76,7 @@ function App() {
                     setOutputHeader('Transcribing ' + file.name + ' to ' + language + ':')
                     setOutput(nl)
                 } else {
-                alert(status + "\nEnsure you entered your directory correctly.") 
+                alert(status) 
                 }
                 
             }).catch((error) => {handleNetworkErrors(error)})
@@ -147,10 +149,8 @@ function Inputs({inputDataFolder, handleChangeInputDataFolder, handleChangeFile,
             </div>
             <div>
                 <h3>Language: </h3>
-                <LanguageRadioButton lang='English'></LanguageRadioButton>
-                <LanguageRadioButton lang='Spanish'></LanguageRadioButton>
-                <LanguageRadioButton lang='Chinese'></LanguageRadioButton>
-                <LanguageRadioButton lang='Russian'></LanguageRadioButton>
+                <LanguageRadioButton lang='Whisper'></LanguageRadioButton>
+                <LanguageRadioButton lang='Wav2Vec2'></LanguageRadioButton>
             </div>
             <div>
                 <button type='submit' onClick={handleTranscribeButtonClick}>Transcribe</button>
