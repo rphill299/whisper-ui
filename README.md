@@ -18,7 +18,7 @@ To download and run our code, the user must:
 - sh scripts/setup.sh (macOS/Linux)
 - TODO: make Windows setup script
 
-This script automatically downloads the following (node packages go into react-ui/node_modules, python packages go into virtual environment created in flask-backend/src/):
+This script automatically downloads the following:
 
 Node.js installs:
 - general node installs ("npm install")
@@ -34,3 +34,5 @@ Python3 installs:
 - torchaudio
 - openai-whisper
 - soundfile
+
+(node packages go into react-ui/node_modules, python packages go into virtual environment created in flask-backend/src/.venv/)
