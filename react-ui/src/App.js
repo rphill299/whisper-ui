@@ -30,7 +30,8 @@ function App() {
     }
 
     function handleChangeSourceLanguage(event) {
-        setLanguage(event.target.value)
+        const lang = event.target.value
+        setLanguage(lang)
     }
 
     /* ==========================================
@@ -141,7 +142,7 @@ function Inputs({inputDataFolder, handleChangeInputDataFolder, handleChangeFile,
             <h2>Inputs:</h2>
             <div>
                 <h3>Input Folder: </h3>
-                <input type='text' defaultValue={inputDataFolder} onChange={handleChangeInputDataFolder}/>
+                <input type='text' defaultValue={inputDataFolder} onChange={handleChangeInputDataFolder} disabled={language === "Wav2Vec2"}/>
             </div>
             <div>
                 <h3>Input File: </h3>
