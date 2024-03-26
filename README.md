@@ -19,7 +19,8 @@ To download and run our code, the user must:
 2. Open your terminal, navigate to our main project directory _(Audio-Analyzer-and-Transcription-Tool)_ and type:
 - macOS/Linux:
     - sh scripts/setup.sh
-- _(coming soon)_
+- Windows:
+    - _(coming soon)_
 
 setup.sh automatically downloads the following:
 
@@ -38,4 +39,4 @@ Python3 installs:
 - openai-whisper
 - soundfile
 
-_(node packages go into react-ui/node_modules; python packages go into virtual environment created in flask-backend/src/.venv/; nothing outside of our project folder is touched)_
+_(node packages go into react-ui/node_modules/; python packages go into virtual environment created in flask-backend/src/.venv/; nothing outside of our project folder is touched)_
