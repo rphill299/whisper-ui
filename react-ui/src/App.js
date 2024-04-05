@@ -8,6 +8,7 @@ function App() {
     const [outputHeader, setOutputHeader] = useState('Choose a file above and click "Transcribe" to transcribe the audio/video file into the desired language');
     const [output, setOutput] = useState()
     const [inputDataFolder, setInputDataFolder] = useState()
+    const [selectFile, setSelectFile] = useState(true)
 
     /* Simple communication with backend here 
         obtaining default data folder from backend */
@@ -118,13 +119,14 @@ function App() {
                 handleChangeSourceLanguage={handleChangeSourceLanguage}
                 handleTranscribeButtonClick={handleTranscribeButtonClick}
                 language={language}> 
+                selectFile={selectFile}
             </Inputs>
             <Outputs output={output} outputHeader={outputHeader}> </Outputs>
         </div>
     );
 }
 
-function Inputs({inputDataFolder, handleChangeInputDataFolder, handleChangeFile, handleChangeSourceLanguage, handleTranscribeButtonClick, language}) {
+function Inputs({inputDataFolder, handleChangeInputDataFolder, handleChangeFile, handleChangeSourceLanguage, handleTranscribeButtonClick, language, selectFile}) {
 
     function LanguageRadioButton({lang}) {
         return (
@@ -144,8 +146,11 @@ function Inputs({inputDataFolder, handleChangeInputDataFolder, handleChangeFile,
                 <input type='text' defaultValue={inputDataFolder} onChange={handleChangeInputDataFolder} disabled={language === "Wav2Vec2"}/>
             </div>
             <div>
-                <h3>Input File: </h3>
-                <input type='file' defaultValue={inputDataFolder} onChange={handleChangeFile}/>
+                <h3>
+                    <input type='checkbox' checked={selectFile}/> Select single file (uncheck to pass folder) </h3>
+                <div>
+                    <input type='file' disabled={!selectFile} defaultValue={inputDataFolder} onChange={handleChangeFile}/>
+                </div>
             </div>
             <div>
                 <h3>Language: </h3>
