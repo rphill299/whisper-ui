@@ -35,6 +35,10 @@ function App() {
         setLanguage(lang)
     }
 
+    function handleSelectFile(event) {
+        setSelectFile(!selectFile)
+    }
+
     /* ==========================================
 
         Handling communication with backend here
@@ -118,15 +122,17 @@ function App() {
                 handleChangeFile={handleChangeFile} 
                 handleChangeSourceLanguage={handleChangeSourceLanguage}
                 handleTranscribeButtonClick={handleTranscribeButtonClick}
-                language={language}> 
+                language={language}
                 selectFile={selectFile}
+                handleSelectFile={handleSelectFile}
+                >
             </Inputs>
             <Outputs output={output} outputHeader={outputHeader}> </Outputs>
         </div>
     );
 }
 
-function Inputs({inputDataFolder, handleChangeInputDataFolder, handleChangeFile, handleChangeSourceLanguage, handleTranscribeButtonClick, language, selectFile}) {
+function Inputs({inputDataFolder, handleChangeInputDataFolder, handleChangeFile, handleChangeSourceLanguage, handleTranscribeButtonClick, language, selectFile, handleSelectFile}) {
 
     function LanguageRadioButton({lang}) {
         return (
@@ -147,13 +153,13 @@ function Inputs({inputDataFolder, handleChangeInputDataFolder, handleChangeFile,
             </div>
             <div>
                 <h3>
-                    <input type='checkbox' checked={selectFile}/> Select single file (uncheck to pass folder) </h3>
+                    <input type='checkbox' checked={selectFile || language === "Wav2Vec2"} onChange={handleSelectFile} disabled={language === "Wav2Vec2"}/> Select single file (uncheck to pass folder) </h3>
                 <div>
                     <input type='file' disabled={!selectFile} defaultValue={inputDataFolder} onChange={handleChangeFile}/>
                 </div>
             </div>
             <div>
-                <h3>Language: </h3>
+                <h3>Language: </h3> 
                 <LanguageRadioButton lang='Whisper'></LanguageRadioButton>
                 <LanguageRadioButton lang='Wav2Vec2'></LanguageRadioButton>
             </div>
