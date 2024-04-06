@@ -74,15 +74,9 @@ function App() {
         else if (language === "Whisper") {
             if (selectFile) { // pass a file
                 setOutputHeader('Transcribing ' + file.name + ' using ' + language + ':')
+                setOutput("")
                 axios.get('/whisper-transcribe-file/', {params:{'folder':inputDataFolder, 'filename':file.name}})
-                .then((response) => {const data = response.data;
-                    const status = data.status;
-                    if (status === 0) {
-                        const nl = NewlineText(data.transcript.text);
-                        setOutput(nl);
-                    } else {
-                        alert(status);
-                    }})
+                .then((response) => {handleBackendResponse(response)})
                 .catch((error) => {handleNetworkErrors(error)})
                 } 
             else { // pass a folder
@@ -100,7 +94,13 @@ function App() {
         const data = response.data;
         const status = data.status;
         if (status === 0) {
-            const nl = NewlineText(data.transcript.text);
+            let txt
+            if (data.transcript.text) {
+                txt = data.transcript.text
+            } else {
+                txt = data.transcript
+            }
+            const nl = NewlineText(txt);
             setOutput(nl);
         } else {
             alert(status);

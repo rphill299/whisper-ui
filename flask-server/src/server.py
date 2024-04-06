@@ -26,17 +26,31 @@ def init():
     return response
 
 
-# this is called when the transcribe button is pressed and we want to transcribe a single file with Whisper
-# TODO: modify to accept arguments, or adjust to only be called under some settings
+# transcribe a single file with Whisper
 @app.route('/whisper-transcribe-file/', methods = ['GET'])
 @cross_origin()
-def whisper_transcribe():
+def whisper_transcribe_file():
     inputFilename = request.args.get("filename")
     inputFolder = request.args.get("folder")
     inputFilePath = join(inputFolder, inputFilename)
     print("received whisper transcribe request for " + inputFilename, file=PRINT_TO_CONSOLE)
 
     transcript = model.transcribe(inputFilePath)
+
+    response = {'status'    : 0,
+                'transcript': transcript}
+    return response
+
+# transcribe a folder with Whisper
+@app.route('/whisper-transcribe-folder/', methods = ['GET'])
+@cross_origin()
+def whisper_transcribe_folder():
+    inputFolder = request.args.get("folder")
+    print("received whisper transcribe request for " + inputFolder, file=PRINT_TO_CONSOLE)
+
+    transcript = "need to implement"
+
+    ## HANDLE BATCH TRANSCRIPTION ## 
 
     response = {'status'    : 0,
                 'transcript': transcript}
