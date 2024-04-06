@@ -26,9 +26,9 @@ def init():
     return response
 
 
-# this is called when the transcribe button is pressed 
+# this is called when the transcribe button is pressed and we want to transcribe a single file with Whisper
 # TODO: modify to accept arguments, or adjust to only be called under some settings
-@app.route('/whisper-transcribe/', methods = ['GET'])
+@app.route('/whisper-transcribe-file/', methods = ['GET'])
 @cross_origin()
 def whisper_transcribe():
     inputFilename = request.args.get("filename")

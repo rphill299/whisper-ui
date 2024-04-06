@@ -45,7 +45,7 @@ function App() {
        ==========================================
     */
     function handleTranscribeButtonClick() {
-        if (!file) {
+        if ((selectFile || language==="Wav2Vec2") && !file) {
             alert("You must select a file to transcribe.")
             return
         }
@@ -72,19 +72,38 @@ function App() {
             }).catch((error) => {handleNetworkErrors(error)})
         } 
         else if (language === "Whisper") {
-            axios.get('/whisper-transcribe/', {params:{'folder':inputDataFolder, 'filename':file.name}})
-            .then((response) => {
-                const data = response.data
-                const status = data.status
-                if (status === 0) {
-                    const nl = NewlineText(data.transcript.text)
-                    setOutputHeader('Transcribing ' + file.name + ' using ' + language + ':')
-                    setOutput(nl)
-                } else {
-                alert(status) 
-                }
-                
-            }).catch((error) => {handleNetworkErrors(error)})
+            if (selectFile) { // pass a file
+                setOutputHeader('Transcribing ' + file.name + ' using ' + language + ':')
+                axios.get('/whisper-transcribe-file/', {params:{'folder':inputDataFolder, 'filename':file.name}})
+                .then((response) => {const data = response.data;
+                    const status = data.status;
+                    if (status === 0) {
+                        const nl = NewlineText(data.transcript.text);
+                        setOutput(nl);
+                    } else {
+                        alert(status);
+                    }})
+                .catch((error) => {handleNetworkErrors(error)})
+                } 
+            else { // pass a folder
+                setOutputHeader('Transcribing ' + inputDataFolder + ' using ' + language + ':')
+                axios.get('/whisper-transcribe-folder', {params:{'folder':inputDataFolder}})
+                .then((response) => { handleBackendResponse(response)})
+                .catch((error) => {handleNetworkErrors(error)})
+            }
+            
+            
+        }
+    }
+
+    function handleBackendResponse(response) {
+        const data = response.data;
+        const status = data.status;
+        if (status === 0) {
+            const nl = NewlineText(data.transcript.text);
+            setOutput(nl);
+        } else {
+            alert(status);
         }
     }
 
@@ -155,7 +174,7 @@ function Inputs({inputDataFolder, handleChangeInputDataFolder, handleChangeFile,
                 <h3>
                     <input type='checkbox' checked={selectFile || language === "Wav2Vec2"} onChange={handleSelectFile} disabled={language === "Wav2Vec2"}/> Select single file (uncheck to pass folder) </h3>
                 <div>
-                    <input type='file' disabled={!selectFile} defaultValue={inputDataFolder} onChange={handleChangeFile}/>
+                    <input type='file' disabled={!selectFile && language !== "Wav2Vec2"} defaultValue={inputDataFolder} onChange={handleChangeFile}/>
                 </div>
             </div>
             <div>
@@ -175,7 +194,9 @@ function Outputs({output, outputHeader}) {
     return (
         <fieldset>
             <h2>Output:</h2>
-            <h3>{outputHeader}</h3>
+            <h3>
+                {outputHeader}
+            </h3>
             <div >{output}</div>
         </fieldset>
     );
