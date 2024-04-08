@@ -139,7 +139,7 @@ function App() {
 
     return (
         <div>
-            <h1>Transcription & Translation Tool</h1>
+            <h1>Transcription Tool</h1>
             <Inputs 
                 inputDataFolder={inputDataFolder}
                 handleChangeInputDataFolder={handleChangeInputDataFolder}
