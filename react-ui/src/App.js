@@ -1,18 +1,23 @@
 import './App.css';
-import { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import axios from 'axios'
 
 function App() {
-    const [file, setFile] = useState()
-    const [language, setLanguage] = useState('Whisper');
-    const [outputHeader, setOutputHeader] = useState('Choose a file above and click "Transcribe" to transcribe the audio/video file into the desired language');
-    const [output, setOutput] = useState()
+ 
+//   [ this_is_the_variable, this_is_the_setter ]
+
+    const [file, setFile] = useState() //stores return value of file selector
+    const [model, setModel] = useState('Whisper'); //stores model in use
+    const [outputHeader, setOutputHeader] = useState(); // gives output details
+    const [output, setOutput] = useState() //store the transcription output
     const [inputDataFolder, setInputDataFolder] = useState()
-    const [selectFile, setSelectFile] = useState(true)
+
+    const [inputMode, setInputMode] = useState('file') // determine file vs. folder select
+    const [optionsVisible, setOptionsVisible] = useState(false) // toggle options
 
     /* Simple communication with backend here 
-        obtaining default data folder from backend */
-    let defaultDataFolder // in general, this variable will be empty due to re-rendering
+        obtaining default data folder from backend on app init*/
+    let defaultDataFolder // in general, this variable will be empty due to re-rendering, use inputDataFolder instead
     if (!inputDataFolder) {
         axios.get('/init/').then((response) => {
             const data = response.data
@@ -26,17 +31,19 @@ function App() {
     }
 
     function handleChangeFile(event) {
-        const file = event.target.files[0]
-        setFile(file)
+        setFile(event.target.files[0])
     }
 
-    function handleChangeSourceLanguage(event) {
-        const lang = event.target.value
-        setLanguage(lang)
+    function handleChangeModel(event) {
+        setModel(event.target.value)
     }
 
-    function handleSelectFile(event) {
-        setSelectFile(!selectFile)
+    function handleOptionsButtonClick() {
+        setOptionsVisible(!optionsVisible)
+    }
+
+    function handleChangeInputMode(event) {
+        setInputMode(event.target.value)
     }
 
     /* ==========================================
@@ -45,13 +52,15 @@ function App() {
        ==========================================
     */
     function handleTranscribeButtonClick() {
-        if ((selectFile || language==="Wav2Vec2") && !file) {
+        if (!file) {
             alert("You must select a file to transcribe.")
             return
         }
 
+        setOutputHeader('Transcribing ' + file.name + ' using ' + model + ':')
+        setOutput("")
 
-        if (language === "Wav2Vec2") {
+        if (model === "Wav2Vec2") {
             const formData = new FormData();
 
             formData.append("file", file);
@@ -63,7 +72,6 @@ function App() {
                 const status = data.status
                 if (status === 0) {
                     const nl = NewlineText(data.transcript)
-                    setOutputHeader('Transcribing ' + file.name + ' using ' + language + ':')
                     setOutput(nl)
                 } else {
                 alert(status) 
@@ -71,16 +79,13 @@ function App() {
 
             }).catch((error) => {handleNetworkErrors(error)})
         } 
-        else if (language === "Whisper") {
-            if (selectFile) { // pass a file
-                setOutputHeader('Transcribing ' + file.name + ' using ' + language + ':')
-                setOutput("")
+        else if (model === "Whisper") {
+            if (inputMode === 'file') { // pass a file
                 axios.get('/whisper-transcribe-file/', {params:{'folder':inputDataFolder, 'filename':file.name}})
                 .then((response) => {handleBackendResponse(response)})
                 .catch((error) => {handleNetworkErrors(error)})
                 } 
-            else { // pass a folder
-                setOutputHeader('Transcribing ' + inputDataFolder + ' using ' + language + ':')
+            else if (inputMode === 'folder') { // pass a folder
                 axios.get('/whisper-transcribe-folder', {params:{'folder':inputDataFolder}})
                 .then((response) => { handleBackendResponse(response)})
                 .catch((error) => {handleNetworkErrors(error)})
@@ -139,11 +144,13 @@ function App() {
                 inputDataFolder={inputDataFolder}
                 handleChangeInputDataFolder={handleChangeInputDataFolder}
                 handleChangeFile={handleChangeFile} 
-                handleChangeSourceLanguage={handleChangeSourceLanguage}
+                handleChangeModel={handleChangeModel}
                 handleTranscribeButtonClick={handleTranscribeButtonClick}
-                language={language}
-                selectFile={selectFile}
-                handleSelectFile={handleSelectFile}
+                modelInUse={model}
+                optionsVisible={optionsVisible}
+                handleOptionsButtonClick={handleOptionsButtonClick}
+                inputMode={inputMode}
+                handleChangeInputMode={handleChangeInputMode}
                 >
             </Inputs>
             <Outputs output={output} outputHeader={outputHeader}> </Outputs>
@@ -151,39 +158,59 @@ function App() {
     );
 }
 
-function Inputs({inputDataFolder, handleChangeInputDataFolder, handleChangeFile, handleChangeSourceLanguage, handleTranscribeButtonClick, language, selectFile, handleSelectFile}) {
+function Inputs({inputDataFolder, handleChangeInputDataFolder, handleChangeFile, modelInUse, handleChangeModel, handleTranscribeButtonClick, 
+    inputMode, handleChangeInputMode, optionsVisible, handleOptionsButtonClick}) {
 
-    function LanguageRadioButton({lang}) {
+    function ModelRadioButton({model}) {
         return (
             <>
-                <input id={lang} type='radio' name='language' value={lang} checked={lang === language}
-                    onChange={handleChangeSourceLanguage}/>
-                <label for={lang}>{lang}</label>
+                <input id={model} type='radio' name='model' value={model} checked={model === modelInUse}
+                    onChange={handleChangeModel}/>
+                <label for={model}>{model}</label>
+            </>
+        );
+    }
+
+    function InputModeRadioButton({mode, label}) {
+        return (
+            <>
+                <input id={mode} type='radio' name='inputMode' value={mode} checked={mode === inputMode}
+                    onChange={handleChangeInputMode}/>
+                <label for={mode}>{label}</label>
             </>
         );
     }
 
     return (
         <fieldset>
-            <h2>Inputs:</h2>
             <div>
-                <h3>Input Folder: </h3>
-                <input type='text' defaultValue={inputDataFolder} onChange={handleChangeInputDataFolder} disabled={language === "Wav2Vec2"}/>
+                <InputModeRadioButton mode="file" label={"I have a file"}></InputModeRadioButton>
+                <InputModeRadioButton mode="folder" label={"I have a folder"}></InputModeRadioButton>
             </div>
             <div>
-                <h3>
-                    <input type='checkbox' checked={selectFile || language === "Wav2Vec2"} onChange={handleSelectFile} disabled={language === "Wav2Vec2"}/> Select single file (uncheck to pass folder) </h3>
-                <div>
-                    <input type='file' disabled={!selectFile && language !== "Wav2Vec2"} defaultValue={inputDataFolder} onChange={handleChangeFile}/>
-                </div>
+                <input type='file' directory={(inputMode==='folder')&&""} webkitdirectory={(inputMode==='folder')&&""} defaultValue={inputDataFolder} onChange={handleChangeFile}/>
             </div>
             <div>
-                <h3>Language: </h3> 
-                <LanguageRadioButton lang='Whisper'></LanguageRadioButton>
-                <LanguageRadioButton lang='Wav2Vec2'></LanguageRadioButton>
+                <button onClick={handleOptionsButtonClick}>Options</button> 
+                {optionsVisible && (
+                    <label style={{ color: 'red'}}>{"←click again to hide options"}</label>
+                )}
+                {optionsVisible && (
+                    <div>
+                        <div>
+                            <label>Input Folder: </label>
+                            <input type='text' defaultValue={inputDataFolder} onChange={handleChangeInputDataFolder} disabled={modelInUse === "Wav2Vec2"}/> 
+                        </div>
+                        <div>  
+                            <label>Model: </label> 
+                            <ModelRadioButton model='Whisper'></ModelRadioButton>
+                            <ModelRadioButton model='Wav2Vec2'></ModelRadioButton>    
+                        </div>
+                    </div>
+                )}
             </div>
             <div>
-                <button type='submit' onClick={handleTranscribeButtonClick}>Transcribe</button>
+                <button type='submit' onClick={handleTranscribeButtonClick} size="lg">Transcribe</button>
             </div>
         </fieldset>
     );
@@ -191,9 +218,8 @@ function Inputs({inputDataFolder, handleChangeInputDataFolder, handleChangeFile,
 
 function Outputs({output, outputHeader}) {
 
-    return (
+    return outputHeader && (
         <fieldset>
-            <h2>Output:</h2>
             <h3>
                 {outputHeader}
             </h3>
