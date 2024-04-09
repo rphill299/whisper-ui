@@ -3,7 +3,7 @@ from flask_cors import CORS, cross_origin
 import sys
 from wav2vec2_test2 import run
 from os.path import expanduser, join, splitext
-from os import getcwd
+from os import getcwd, chdir
 import whisper
 
 app = Flask(__name__)
@@ -12,7 +12,8 @@ app.config['CORS_HEADERS'] = 'Content-Type' #this line may or may not be unneces
 
 PRINT_TO_CONSOLE = sys.stderr #print to this file within endpoints to print to console
 HOME_DIR = expanduser("~") #user's home directory
-CURR_DIR = getcwd() #user's current directory 
+chdir(join("..", ".."))
+CURR_DIR = getcwd() #user's current directory, and project directory
 
 model = whisper.load_model("base")
 
@@ -22,7 +23,7 @@ model = whisper.load_model("base")
 @cross_origin()
 def init():
     print("received initial request", file=PRINT_TO_CONSOLE)
-    response = {'folder'   : CURR_DIR} # returning (home)/Documents/Data with correct separators
+    response = {'folder'   : CURR_DIR} # returning path to main project folder with correct separators
     return response
 
 
