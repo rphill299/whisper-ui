@@ -139,22 +139,28 @@ function App() {
     }
 
     return (
-        <div>
-            <h1>Transcription Tool</h1>
-            <Inputs 
-                inputDataFolder={inputDataFolder}
-                handleChangeInputDataFolder={handleChangeInputDataFolder}
-                handleChangeFile={handleChangeFile} 
-                handleChangeModel={handleChangeModel}
-                handleTranscribeButtonClick={handleTranscribeButtonClick}
-                modelInUse={model}
-                optionsVisible={optionsVisible}
-                handleOptionsButtonClick={handleOptionsButtonClick}
-                inputMode={inputMode}
-                handleChangeInputMode={handleChangeInputMode}
-                >
-            </Inputs>
-            <Outputs output={output} outputHeader={outputHeader}> </Outputs>
+        <div className='App'>
+            <div>
+                <h1>Transcription Tool</h1>
+            </div>
+            <div>
+                <Inputs 
+                    inputDataFolder={inputDataFolder}
+                    handleChangeInputDataFolder={handleChangeInputDataFolder}
+                    handleChangeFile={handleChangeFile} 
+                    handleChangeModel={handleChangeModel}
+                    handleTranscribeButtonClick={handleTranscribeButtonClick}
+                    modelInUse={model}
+                    optionsVisible={optionsVisible}
+                    handleOptionsButtonClick={handleOptionsButtonClick}
+                    inputMode={inputMode}
+                    handleChangeInputMode={handleChangeInputMode}
+                    >
+                </Inputs>      
+            </div>
+            <div>
+                <Outputs output={output} outputHeader={outputHeader}> </Outputs>
+            </div>
         </div>
     );
 }
@@ -192,7 +198,7 @@ function Inputs({inputDataFolder, handleChangeInputDataFolder, handleChangeFile,
                 <input type='file' multiple directory={(inputMode==='folder')&&""} webkitdirectory={(inputMode==='folder')&&""} defaultValue={inputDataFolder} onChange={handleChangeFile}/>
             </div>
             <div>
-                <button onClick={handleOptionsButtonClick}>{(optionsVisible && "Hide " || "") + "Options"}</button>
+                <button onClick={handleOptionsButtonClick}>{((optionsVisible && "Hide ") || "") + "Options"}</button>
                 {optionsVisible && (
                     <div>
                         <div>
