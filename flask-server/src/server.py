@@ -5,6 +5,12 @@ from wav2vec2_test2 import run
 from os.path import expanduser, join, splitext
 from os import getcwd, chdir
 import whisper
+import torchaudio
+from transformers import WhisperForConditionalGeneration, AutoProcessor
+from datasets import load_dataset, Audio
+import numpy as np
+import torch
+import json
 
 app = Flask(__name__)
 cors = CORS(app)
@@ -57,6 +63,46 @@ def whisper_transcribe_folder():
                 'transcript': transcript}
     return response
 
+# transcribe a multiple files with Batched Whisper
+@app.route('/whisper-transcribe-files-batched/', methods = ['GET'])
+@cross_origin()
+def whisper_transcribe_file_batched():
+    files_json = request.args.get("filenames")
+
+    if files_json:
+        files = json.loads(files_json) # Parse JSON string back into Python list
+    else:
+        files = []
+    print("testing im here testing im here")
+    print(files)
+    inputFolder = request.args.get("folder")
+    inputFilePaths = [join(inputFolder, inputFilename) for inputFilename in files]
+    print("received batched whisper transcribe request", file=PRINT_TO_CONSOLE)
+    print(inputFilePaths)
+    ds = load_dataset(inputFolder, data_files=files)["train"]
+    print(ds)
+    ds = ds.cast_column("audio", Audio(sampling_rate=16000))
+
+    print(ds)
+    raw_audio = [x["array"].astype(np.float32) for x in ds["audio"]]
+
+    # process input, make sure to pass `padding='longest'` and `return_attention_mask=True`
+    processor = AutoProcessor.from_pretrained("openai/whisper-medium.en")
+    print("Im here")
+    inputs = processor(raw_audio, return_tensors="pt", truncation=False, padding="longest", return_attention_mask=True, sampling_rate=16_000)
+    inputs = inputs.to("cuda", torch.float16)
+    print("Im here too")
+    model_medium = WhisperForConditionalGeneration.from_pretrained("openai/whisper-medium.en", torch_dtype=torch.float16)
+    model_medium.to("cuda")
+
+    # activate `temperature_fallback` and repetition detection filters and condition on prev text
+    result = model_medium.generate(**inputs, condition_on_prev_tokens=False, temperature=(0.0, 0.2, 0.4, 0.6, 0.8, 1.0), logprob_threshold=-1.0, compression_ratio_threshold=1.35, return_timestamps=True)
+
+    transcript = processor.batch_decode(result, skip_special_tokens=True)
+    print(transcript)
+    response = {'status'    : 0,
+                'transcript': transcript}
+    return response
 
 @app.route('/wav2vec2-transcribe/', methods = ['POST'])
 @cross_origin()

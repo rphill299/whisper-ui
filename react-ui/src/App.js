@@ -31,7 +31,7 @@ function App() {
     }
 
     function handleChangeFile(event) {
-        setFile(event.target.files[0])
+        setFile(event.target.files)
     }
 
     function handleChangeModel(event) {
@@ -81,7 +81,8 @@ function App() {
         } 
         else if (model === "Whisper") {
             if (inputMode === 'file') { // pass a file
-                axios.get('/whisper-transcribe-file/', {params:{'folder':inputDataFolder, 'filename':file.name}})
+                const filenames = Array.from(file).map(f => f.name);
+                axios.get('/whisper-transcribe-file/', {params:{'folder':inputDataFolder, 'filename':JSON.stringify(filenames)}})
                 .then((response) => {handleBackendResponse(response)})
                 .catch((error) => {handleNetworkErrors(error)})
                 } 
@@ -188,7 +189,7 @@ function Inputs({inputDataFolder, handleChangeInputDataFolder, handleChangeFile,
                 <InputModeRadioButton mode="folder" label={"I have a folder"}></InputModeRadioButton>
             </div>
             <div>
-                <input type='file' directory={(inputMode==='folder')&&""} webkitdirectory={(inputMode==='folder')&&""} defaultValue={inputDataFolder} onChange={handleChangeFile}/>
+                <input type='file' multiple directory={(inputMode==='folder')&&""} webkitdirectory={(inputMode==='folder')&&""} defaultValue={inputDataFolder} onChange={handleChangeFile}/>
             </div>
             <div>
                 <button onClick={handleOptionsButtonClick}>Options</button> 
