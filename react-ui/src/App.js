@@ -1,5 +1,8 @@
 import './App.css';
 import React, { useState, useEffect } from 'react';
+import Paper from "@material-ui/core/Paper";
+import Tab from "@material-ui/core/Tab";
+import Tabs from "@material-ui/core/Tabs";
 import axios from 'axios'
 
 function App() {
@@ -11,6 +14,7 @@ function App() {
     const [outputHeader, setOutputHeader] = useState(); // gives output details
     const [output, setOutput] = useState() //store the transcription output
     const [inputDataFolder, setInputDataFolder] = useState()
+    const [tabIndex, setTabIndex] = useState(0);
 
     const [inputMode, setInputMode] = useState('file') // determine file vs. folder select
     const [optionsVisible, setOptionsVisible] = useState(false) // toggle options
@@ -83,12 +87,12 @@ function App() {
             if (inputMode === 'file') { // pass a file
                 const filenames = Array.from(file).map(f => f.name);
                 axios.get('/whisper-transcribe-files-batched/', {params:{'folder':inputDataFolder, 'filenames':JSON.stringify(filenames)}})
-                .then((response) => {handleBackendResponse(response)})
+                .then((response, filenames) => {handleBackendResponse(response, filenames)})
                 .catch((error) => {handleNetworkErrors(error)})
                 } 
             else if (inputMode === 'folder') { // pass a folder
                 axios.get('/whisper-transcribe-folder', {params:{'folder':inputDataFolder}})
-                .then((response) => { handleBackendResponse(response)})
+                .then((response, filenames) => { handleBackendResponse(response, filenames)})
                 .catch((error) => {handleNetworkErrors(error)})
             }
             
@@ -96,21 +100,30 @@ function App() {
         }
     }
 
-    function handleBackendResponse(response) {
+    function handleBackendResponse(response, filenames) {
         const data = response.data;
         const status = data.status;
         if (status === 0) {
-            let txt
-            if (data.transcript.text) {
-                txt = data.transcript.text
-            } else {
-                txt = data.transcript
-            }
-            const nl = NewlineText(txt);
-            setOutput(nl);
+            const transcripts = data.transcript
+            setOutput(TabbedOutput(transcripts, filenames))
         } else {
             alert(status);
         }
+    }
+
+    function TabbedOutput(transcripts, filenames) {
+        const tabsArray = []
+        for (let i = 0; i < filenames.length; i++) {
+            tabsArray.push(<Tab label={filenames[i]}/>)
+        }
+        return (
+            <Paper square>
+                <Tabs value={tabIndex} onChange={(event,newIndex) => setTabIndex(newIndex)}>
+                    {tabsArray}
+                </Tabs>
+                <p>transcripts[tabIndex-1]</p>
+            </Paper>
+        )
     }
 
     function NewlineText(text) {
@@ -159,7 +172,7 @@ function App() {
                 </Inputs>      
             </div>
             <div>
-                <Outputs output={output} outputHeader={outputHeader}> </Outputs>
+                <Outputs output={output} outputHeader={outputHeader} tabIndex={tabIndex} setTabIndex={setTabIndex}> </Outputs>
             </div>
         </div>
     );
@@ -220,14 +233,20 @@ function Inputs({inputDataFolder, handleChangeInputDataFolder, handleChangeFile,
     );
 }
 
-function Outputs({output, outputHeader}) {
+function Outputs({output, outputHeader, tabIndex, setTabIndex}) {
 
     return outputHeader && (
         <fieldset>
             <h3>
                 {outputHeader}
             </h3>
-            <div >{output}</div>
+            <Paper>
+                <Tabs textColor="black" indicatorColor="primary" value={tabIndex} onChange={(event,newIndex) => setTabIndex(newIndex)}>
+                    <Tab label="test">Test</Tab>
+                    <Tab label="another">Another</Tab>
+                </Tabs>
+                <p>Tab {tabIndex}</p>
+            </Paper>
         </fieldset>
     );
 }

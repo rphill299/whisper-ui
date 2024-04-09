@@ -67,6 +67,8 @@ def whisper_transcribe_folder():
 @app.route('/whisper-transcribe-files-batched/', methods = ['GET'])
 @cross_origin()
 def whisper_transcribe_file_batched():
+    if not torch.cuda.is_available() : 
+        return {'status': 0, 'transcript':["result1", "result2"]}
     files_json = request.args.get("filenames")
 
     if files_json:
