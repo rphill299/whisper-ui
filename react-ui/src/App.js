@@ -82,7 +82,7 @@ function App() {
         else if (model === "Whisper") {
             if (inputMode === 'file') { // pass a file
                 const filenames = Array.from(file).map(f => f.name);
-                axios.get('/whisper-transcribe-file/', {params:{'folder':inputDataFolder, 'filename':JSON.stringify(filenames)}})
+                axios.get('/whisper-transcribe-files-batched/', {params:{'folder':inputDataFolder, 'filenames':JSON.stringify(filenames)}})
                 .then((response) => {handleBackendResponse(response)})
                 .catch((error) => {handleNetworkErrors(error)})
                 } 

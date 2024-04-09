@@ -73,7 +73,6 @@ def whisper_transcribe_file_batched():
         files = json.loads(files_json) # Parse JSON string back into Python list
     else:
         files = []
-    print("testing im here testing im here")
     print(files)
     inputFolder = request.args.get("folder")
     inputFilePaths = [join(inputFolder, inputFilename) for inputFilename in files]
@@ -88,10 +87,8 @@ def whisper_transcribe_file_batched():
 
     # process input, make sure to pass `padding='longest'` and `return_attention_mask=True`
     processor = AutoProcessor.from_pretrained("openai/whisper-medium.en")
-    print("Im here")
     inputs = processor(raw_audio, return_tensors="pt", truncation=False, padding="longest", return_attention_mask=True, sampling_rate=16_000)
     inputs = inputs.to("cuda", torch.float16)
-    print("Im here too")
     model_medium = WhisperForConditionalGeneration.from_pretrained("openai/whisper-medium.en", torch_dtype=torch.float16)
     model_medium.to("cuda")
 
