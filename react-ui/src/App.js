@@ -192,10 +192,7 @@ function Inputs({inputDataFolder, handleChangeInputDataFolder, handleChangeFile,
                 <input type='file' multiple directory={(inputMode==='folder')&&""} webkitdirectory={(inputMode==='folder')&&""} defaultValue={inputDataFolder} onChange={handleChangeFile}/>
             </div>
             <div>
-                <button onClick={handleOptionsButtonClick}>Options</button> 
-                {optionsVisible && (
-                    <label style={{ color: 'red'}}>{"←click again to hide options"}</label>
-                )}
+                <button onClick={handleOptionsButtonClick}>{(optionsVisible && "Hide " || "") + "Options"}</button>
                 {optionsVisible && (
                     <div>
                         <div>
