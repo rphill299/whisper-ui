@@ -15,12 +15,14 @@ function App() {
     const [output, setOutput] = useState() //store the transcription output
     const [inputDataFolder, setInputDataFolder] = useState()
     const [tabIndex, setTabIndex] = useState(0);
+    const [transcripts, setTranscripts] = useState([])
+    const [filenames, setFilenames] = useState([])
 
     const [inputMode, setInputMode] = useState('file') // determine file vs. folder select
     const [optionsVisible, setOptionsVisible] = useState(false) // toggle options
 
     /* Simple communication with backend here 
-        obtaining default data folder from backend on app init*/
+        obtaining default data folder from backend on app  init*/
     let defaultDataFolder // in general, this variable will be empty due to re-rendering, use inputDataFolder instead
     if (!inputDataFolder) {
         axios.get('/init/').then((response) => {
@@ -50,6 +52,10 @@ function App() {
         setInputMode(event.target.value)
     }
 
+    function handleChangeTab(index) {
+        setTabIndex(index)
+    }
+
     /* ==========================================
 
         Handling communication with backend here
@@ -61,7 +67,7 @@ function App() {
             return
         }
 
-        setOutputHeader('Transcribing ' + file.name + ' using ' + model + ':')
+        setOutputHeader('Transcribing ' + file.length + ' file' + (file.length===1 ? '' : 's') + ' using ' + model + ':')
         setOutput("")
 
         if (model === "Wav2Vec2") {
@@ -86,44 +92,27 @@ function App() {
         else if (model === "Whisper") {
             if (inputMode === 'file') { // pass a file
                 const filenames = Array.from(file).map(f => f.name);
+                setFilenames(filenames)
                 axios.get('/whisper-transcribe-files-batched/', {params:{'folder':inputDataFolder, 'filenames':JSON.stringify(filenames)}})
-                .then((response, filenames) => {handleBackendResponse(response, filenames)})
+                .then((response) => {handleBackendResponse(response)})
                 .catch((error) => {handleNetworkErrors(error)})
                 } 
             else if (inputMode === 'folder') { // pass a folder
                 axios.get('/whisper-transcribe-folder', {params:{'folder':inputDataFolder}})
-                .then((response, filenames) => { handleBackendResponse(response, filenames)})
+                .then((response) => { handleBackendResponse(response)})
                 .catch((error) => {handleNetworkErrors(error)})
             }
-            
-            
         }
     }
 
-    function handleBackendResponse(response, filenames) {
+    function handleBackendResponse(response) {
         const data = response.data;
         const status = data.status;
         if (status === 0) {
-            const transcripts = data.transcript
-            setOutput(TabbedOutput(transcripts, filenames))
+            setTranscripts(data.transcript)
         } else {
             alert(status);
         }
-    }
-
-    function TabbedOutput(transcripts, filenames) {
-        const tabsArray = []
-        for (let i = 0; i < filenames.length; i++) {
-            tabsArray.push(<Tab label={filenames[i]}/>)
-        }
-        return (
-            <Paper square>
-                <Tabs value={tabIndex} onChange={(event,newIndex) => setTabIndex(newIndex)}>
-                    {tabsArray}
-                </Tabs>
-                <p>transcripts[tabIndex-1]</p>
-            </Paper>
-        )
     }
 
     function NewlineText(text) {
@@ -172,7 +161,13 @@ function App() {
                 </Inputs>      
             </div>
             <div>
-                <Outputs output={output} outputHeader={outputHeader} tabIndex={tabIndex} setTabIndex={setTabIndex}> </Outputs>
+                <Outputs 
+                    outputHeader={outputHeader} 
+                    tabIndex={tabIndex} 
+                    handleChangeTab={handleChangeTab}
+                    transcripts={transcripts}
+                    filenames={filenames}> 
+                </Outputs>
             </div>
         </div>
     );
@@ -211,7 +206,7 @@ function Inputs({inputDataFolder, handleChangeInputDataFolder, handleChangeFile,
                 <input type='file' multiple directory={(inputMode==='folder')&&""} webkitdirectory={(inputMode==='folder')&&""} defaultValue={inputDataFolder} onChange={handleChangeFile}/>
             </div>
             <div>
-                <button onClick={handleOptionsButtonClick}>{((optionsVisible && "Hide ") || "") + "Options"}</button>
+                <button onClick={handleOptionsButtonClick}>{(optionsVisible ? "Hide " : "") + "Options"}</button>
                 {optionsVisible && (
                     <div>
                         <div>
@@ -233,22 +228,34 @@ function Inputs({inputDataFolder, handleChangeInputDataFolder, handleChangeFile,
     );
 }
 
-function Outputs({output, outputHeader, tabIndex, setTabIndex}) {
-
+function Outputs({outputHeader, tabIndex, handleChangeTab, transcripts, filenames}) {
+    const tabsArray = []
+    for (let i = 0; i < filenames.length; i++) {
+        tabsArray.push(<Tab value={i} label={filenames[i]}/>)
+    }
+    console.log(tabsArray)
     return outputHeader && (
-        <fieldset>
+        <div>
             <h3>
                 {outputHeader}
             </h3>
-            <Paper>
-                <Tabs textColor="black" indicatorColor="primary" value={tabIndex} onChange={(event,newIndex) => setTabIndex(newIndex)}>
-                    <Tab label="test">Test</Tab>
-                    <Tab label="another">Another</Tab>
+            <Paper square>
+                <Tabs value={tabIndex} onChange={(event, newIndex) => {handleChangeTab(newIndex)}}>
+                    {tabsArray}
                 </Tabs>
-                <p>Tab {tabIndex}</p>
-            </Paper>
-        </fieldset>
+                <p>{transcripts[tabIndex]}</p>
+            </Paper> 
+        </div>
     );
 }
 
 export default App;
+
+
+
+{/* <Paper square>
+<Tabs value={tabIndex} onChange={(event, newIndex) => {handleChangeTab(newIndex)}}>
+    {tabsArray}
+</Tabs>
+<p>{transcripts[tabIndex]}</p>
+</Paper> */}

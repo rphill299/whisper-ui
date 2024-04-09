@@ -1,4 +1,4 @@
-from flask import Flask, request
+from flask import Flask, request, jsonify
 from flask_cors import CORS, cross_origin
 import sys
 from wav2vec2_test2 import run
@@ -68,7 +68,7 @@ def whisper_transcribe_folder():
 @cross_origin()
 def whisper_transcribe_file_batched():
     if not torch.cuda.is_available() : 
-        return {'status': 0, 'transcript':["result1", "result2"]}
+        return {'status': 0, 'transcript':["first transcription from backend", "second transcription from backend"]}
     files_json = request.args.get("filenames")
 
     if files_json:
