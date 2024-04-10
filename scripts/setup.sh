@@ -8,12 +8,9 @@
 # 1. React
 
 cd ./react-ui
-# general installs
-[ -d node_modules ] || npm install 
-# install axios for communication with backend
-[ -d node_modules/axios ] || npm install axios
-# install concurrently for running backend and frontend at same time in same terminal session
-[ -d node_modules/concurrently ] || npm install concurrently
+# performs all installs according to package-lock.json 
+# --force because otherwise cannot install @material-ui for tabbed view
+[ -d node_modules ] || npm install --force
 cd ../
 
 
