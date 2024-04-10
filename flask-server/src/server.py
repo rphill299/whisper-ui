@@ -67,8 +67,6 @@ def whisper_transcribe_folder():
 @app.route('/whisper-transcribe-files-batched/', methods = ['GET'])
 @cross_origin()
 def whisper_transcribe_file_batched():
-    if not torch.cuda.is_available() : 
-        return {'status': 0, 'transcript':["first transcription from backend", "second transcription from backend"]}
     files_json = request.args.get("filenames")
 
     if files_json:
@@ -76,6 +74,16 @@ def whisper_transcribe_file_batched():
     else:
         files = []
     print(files)
+
+    # if no GPU, return dummy data
+    if not torch.cuda.is_available() : 
+        transcripts = []
+        for f in files :
+            transcripts.append("(transcription of " + f + " from the backend)")
+        print("RYAN HERE")
+        print(transcripts)
+        return {'status': 0, 'transcript':transcripts}
+
     inputFolder = request.args.get("folder")
     inputFilePaths = [join(inputFolder, inputFilename) for inputFilename in files]
     print("received batched whisper transcribe request", file=PRINT_TO_CONSOLE)
