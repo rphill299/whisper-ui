@@ -1,5 +1,8 @@
 import './App.css';
 import React, { useState, useEffect } from 'react';
+import Paper from "@material-ui/core/Paper";
+import Tab from "@material-ui/core/Tab";
+import Tabs from "@material-ui/core/Tabs";
 import axios from 'axios'
 
 function App() {
@@ -11,12 +14,15 @@ function App() {
     const [outputHeader, setOutputHeader] = useState(); // gives output details
     const [output, setOutput] = useState() //store the transcription output
     const [inputDataFolder, setInputDataFolder] = useState()
+    const [tabIndex, setTabIndex] = useState(0);
+    const [transcripts, setTranscripts] = useState([])
+    const [filenames, setFilenames] = useState([])
 
     const [inputMode, setInputMode] = useState('file') // determine file vs. folder select
     const [optionsVisible, setOptionsVisible] = useState(false) // toggle options
 
     /* Simple communication with backend here 
-        obtaining default data folder from backend on app init*/
+        obtaining default data folder from backend on app  init*/
     let defaultDataFolder // in general, this variable will be empty due to re-rendering, use inputDataFolder instead
     if (!inputDataFolder) {
         axios.get('/init/').then((response) => {
@@ -31,7 +37,7 @@ function App() {
     }
 
     function handleChangeFile(event) {
-        setFile(event.target.files[0])
+        setFile(event.target.files)
     }
 
     function handleChangeModel(event) {
@@ -46,6 +52,10 @@ function App() {
         setInputMode(event.target.value)
     }
 
+    function handleChangeTab(index) {
+        setTabIndex(index)
+    }
+
     /* ==========================================
 
         Handling communication with backend here
@@ -57,7 +67,7 @@ function App() {
             return
         }
 
-        setOutputHeader('Transcribing ' + file.name + ' using ' + model + ':')
+        setOutputHeader('Transcribing ' + file.length + ' file' + (file.length===1 ? '' : 's') + ' using ' + model + ':')
         setOutput("")
 
         if (model === "Wav2Vec2") {
@@ -81,7 +91,9 @@ function App() {
         } 
         else if (model === "Whisper") {
             if (inputMode === 'file') { // pass a file
-                axios.get('/whisper-transcribe-file/', {params:{'folder':inputDataFolder, 'filename':file.name}})
+                const filenames = Array.from(file).map(f => f.name);
+                setFilenames(filenames)
+                axios.get('/whisper-transcribe-files-batched/', {params:{'folder':inputDataFolder, 'filenames':JSON.stringify(filenames)}})
                 .then((response) => {handleBackendResponse(response)})
                 .catch((error) => {handleNetworkErrors(error)})
                 } 
@@ -90,8 +102,6 @@ function App() {
                 .then((response) => { handleBackendResponse(response)})
                 .catch((error) => {handleNetworkErrors(error)})
             }
-            
-            
         }
     }
 
@@ -99,14 +109,7 @@ function App() {
         const data = response.data;
         const status = data.status;
         if (status === 0) {
-            let txt
-            if (data.transcript.text) {
-                txt = data.transcript.text
-            } else {
-                txt = data.transcript
-            }
-            const nl = NewlineText(txt);
-            setOutput(nl);
+            setTranscripts(data.transcript)
         } else {
             alert(status);
         }
@@ -138,22 +141,34 @@ function App() {
     }
 
     return (
-        <div>
-            <h1>Transcription Tool</h1>
-            <Inputs 
-                inputDataFolder={inputDataFolder}
-                handleChangeInputDataFolder={handleChangeInputDataFolder}
-                handleChangeFile={handleChangeFile} 
-                handleChangeModel={handleChangeModel}
-                handleTranscribeButtonClick={handleTranscribeButtonClick}
-                modelInUse={model}
-                optionsVisible={optionsVisible}
-                handleOptionsButtonClick={handleOptionsButtonClick}
-                inputMode={inputMode}
-                handleChangeInputMode={handleChangeInputMode}
-                >
-            </Inputs>
-            <Outputs output={output} outputHeader={outputHeader}> </Outputs>
+        <div className='App'>
+            <div>
+                <h1>Transcription Tool</h1>
+            </div>
+            <div>
+                <Inputs 
+                    inputDataFolder={inputDataFolder}
+                    handleChangeInputDataFolder={handleChangeInputDataFolder}
+                    handleChangeFile={handleChangeFile} 
+                    handleChangeModel={handleChangeModel}
+                    handleTranscribeButtonClick={handleTranscribeButtonClick}
+                    modelInUse={model}
+                    optionsVisible={optionsVisible}
+                    handleOptionsButtonClick={handleOptionsButtonClick}
+                    inputMode={inputMode}
+                    handleChangeInputMode={handleChangeInputMode}
+                    >
+                </Inputs>      
+            </div>
+            <div>
+                <Outputs 
+                    outputHeader={outputHeader} 
+                    tabIndex={tabIndex} 
+                    handleChangeTab={handleChangeTab}
+                    transcripts={transcripts}
+                    filenames={filenames}> 
+                </Outputs>
+            </div>
         </div>
     );
 }
@@ -188,13 +203,10 @@ function Inputs({inputDataFolder, handleChangeInputDataFolder, handleChangeFile,
                 <InputModeRadioButton mode="folder" label={"I have a folder"}></InputModeRadioButton>
             </div>
             <div>
-                <input type='file' directory={(inputMode==='folder')&&""} webkitdirectory={(inputMode==='folder')&&""} defaultValue={inputDataFolder} onChange={handleChangeFile}/>
+                <input type='file' multiple directory={(inputMode==='folder')&&""} webkitdirectory={(inputMode==='folder')&&""} defaultValue={inputDataFolder} onChange={handleChangeFile}/>
             </div>
             <div>
-                <button onClick={handleOptionsButtonClick}>Options</button> 
-                {optionsVisible && (
-                    <label style={{ color: 'red'}}>{"←click again to hide options"}</label>
-                )}
+                <button onClick={handleOptionsButtonClick}>{(optionsVisible ? "Hide " : "") + "Options"}</button>
                 {optionsVisible && (
                     <div>
                         <div>
@@ -216,16 +228,34 @@ function Inputs({inputDataFolder, handleChangeInputDataFolder, handleChangeFile,
     );
 }
 
-function Outputs({output, outputHeader}) {
-
+function Outputs({outputHeader, tabIndex, handleChangeTab, transcripts, filenames}) {
+    const tabsArray = []
+    for (let i = 0; i < filenames.length; i++) {
+        tabsArray.push(<Tab value={i} label={filenames[i]}/>)
+    }
+    console.log(tabsArray)
     return outputHeader && (
-        <fieldset>
+        <div>
             <h3>
                 {outputHeader}
             </h3>
-            <div >{output}</div>
-        </fieldset>
+            <Paper square>
+                <Tabs value={tabIndex} onChange={(event, newIndex) => {handleChangeTab(newIndex)}}>
+                    {tabsArray}
+                </Tabs>
+                <p>{transcripts[tabIndex]}</p>
+            </Paper> 
+        </div>
     );
 }
 
 export default App;
+
+
+
+{/* <Paper square>
+<Tabs value={tabIndex} onChange={(event, newIndex) => {handleChangeTab(newIndex)}}>
+    {tabsArray}
+</Tabs>
+<p>{transcripts[tabIndex]}</p>
+</Paper> */}

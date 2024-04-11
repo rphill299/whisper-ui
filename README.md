@@ -27,8 +27,8 @@ To run our code, the user must:
 
 #### setup.sh automatically downloads the following:
 
-- __Node.js installs__: general node installs _("npm install")_, axios, concurrently
-- __Python3 installs__: numpy, flask, flask-cors, python-dotenv, torch, torchaudio, openai-whisper, soundfile
+- __Node.js installs__: general node installs _("npm install")_
+- __Python3 installs__: numpy, flask, flask-cors, python-dotenv, torch, torchaudio, openai-whisper, soundfile, librosa, datasets, and https://github.com/huggingface/transformers
 
 _(node packages go into react-ui/node_modules/; python packages go into virtual environment created in flask-backend/src/.venv/; nothing outside of our project folder is touched)_
 
