@@ -2,6 +2,7 @@ from flask import Flask, request, jsonify
 from flask_cors import CORS, cross_origin
 import sys
 from wav2vec2_test2 import run
+from utils import read_file
 from os.path import expanduser, join, splitext
 from os import getcwd, chdir
 import whisper
@@ -116,8 +117,9 @@ def whisper_transcribe_file_batched():
 def wav2vec2_transcribe():
     for _file in request.files.values():
         print("received wav2vec2 transcribe request for " + _file.filename, file=PRINT_TO_CONSOLE)
-        transcript = run(file=_file, flag=False)
-        print(transcript, file=PRINT_TO_CONSOLE)
+        audio = read_file(_file)
+        transcript = model.transcribe(audio)
+        print(transcript['text'], file=PRINT_TO_CONSOLE)
     response = {'status'    : 0,
                 'transcript':'4'}
     return response
