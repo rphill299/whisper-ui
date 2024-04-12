@@ -10,6 +10,7 @@ function App() {
 //   [ this_is_the_variable, this_is_the_setter ]
 
     const [file, setFile] = useState() //stores return value of file selector
+    const [files, setFiles] = useState([])
     const [model, setModel] = useState('Whisper'); //stores model in use
     const [outputHeader, setOutputHeader] = useState(); // gives output details
     const [output, setOutput] = useState() //store the transcription output
@@ -39,6 +40,16 @@ function App() {
     function handleChangeFile(event) {
         setFile(event.target.files)
     }
+    
+    function handleAddFiles(event) {
+        var newFiles = [...files]
+        for (let i=0; i<event.target.files.length; i++){
+            newFiles = [...newFiles, event.target.files[i]]
+            console.log(event.target.files[i].name)
+        }
+        setFiles(newFiles)
+        setFile('9')
+    }
 
     function handleChangeModel(event) {
         setModel(event.target.value)
@@ -67,28 +78,21 @@ function App() {
             return
         }
 
-        setOutputHeader('Transcribing ' + file.length + ' file' + (file.length===1 ? '' : 's') + ' using ' + model + ':')
+        setOutputHeader('Transcribing ' + files.length + ' file' + (files.length===1 ? '' : 's') + ' using ' + model + ':')
         setOutput("")
+        console.log(files.length)
 
         if (model === "Wav2Vec2") {
             const formData = new FormData();
-
-            formData.append("file", file);
+            for (let i=0; i<files.length; i++) {
+                formData.append(files[i].name, files[i]);
+            }
 
             axios.post('/wav2vec2-transcribe/', formData, {
                 headers: { 'Content-Type': 'multipart/form-data' }
-            }).then((response) => {
-                const data = response.data
-                const status = data.status
-                if (status === 0) {
-                    const nl = NewlineText(data.transcript)
-                    setOutput(nl)
-                } else {
-                alert(status) 
-                }
-
-            }).catch((error) => {handleNetworkErrors(error)})
-        } 
+            }).then((response) => { handleBackendResponse(response)})
+            .catch((error) => {handleNetworkErrors(error)})
+        }
         else if (model === "Whisper") {
             if (inputMode === 'file') { // pass a file
                 const filenames = Array.from(file).map(f => f.name);
@@ -150,6 +154,7 @@ function App() {
                     inputDataFolder={inputDataFolder}
                     handleChangeInputDataFolder={handleChangeInputDataFolder}
                     handleChangeFile={handleChangeFile} 
+                    handleAddFiles={handleAddFiles}
                     handleChangeModel={handleChangeModel}
                     handleTranscribeButtonClick={handleTranscribeButtonClick}
                     modelInUse={model}
@@ -173,7 +178,7 @@ function App() {
     );
 }
 
-function Inputs({inputDataFolder, handleChangeInputDataFolder, handleChangeFile, modelInUse, handleChangeModel, handleTranscribeButtonClick, 
+function Inputs({inputDataFolder, handleChangeInputDataFolder, handleChangeFile, handleAddFiles, modelInUse, handleChangeModel, handleTranscribeButtonClick,
     inputMode, handleChangeInputMode, optionsVisible, handleOptionsButtonClick}) {
 
     function ModelRadioButton({model}) {
@@ -203,7 +208,7 @@ function Inputs({inputDataFolder, handleChangeInputDataFolder, handleChangeFile,
                 <InputModeRadioButton mode="folder" label={"I have a folder"}></InputModeRadioButton>
             </div>
             <div>
-                <input type='file' multiple directory={(inputMode==='folder')&&""} webkitdirectory={(inputMode==='folder')&&""} defaultValue={inputDataFolder} onChange={handleChangeFile}/>
+                <input type='file' multiple directory={(inputMode==='folder')&&""} webkitdirectory={(inputMode==='folder')&&""} defaultValue={inputDataFolder} onChange={handleAddFiles}/>
             </div>
             <div>
                 <button onClick={handleOptionsButtonClick}>{(optionsVisible ? "Hide " : "") + "Options"}</button>

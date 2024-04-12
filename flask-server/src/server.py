@@ -114,10 +114,10 @@ def whisper_transcribe_file_batched():
 @app.route('/wav2vec2-transcribe/', methods = ['POST'])
 @cross_origin()
 def wav2vec2_transcribe():
-    file = request.files['file']
-    print("received wav2vec2 transcribe request for " + file.filename, file=PRINT_TO_CONSOLE)
-
-    transcript = run(file=file, flag=False)
+    for _file in request.files.values():
+        print("received wav2vec2 transcribe request for " + _file.filename, file=PRINT_TO_CONSOLE)
+        transcript = run(file=_file, flag=False)
+        print(transcript, file=PRINT_TO_CONSOLE)
     response = {'status'    : 0,
-                'transcript':transcript}
+                'transcript':'4'}
     return response
