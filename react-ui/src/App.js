@@ -88,7 +88,7 @@ function App() {
                 formData.append(files[i].name, files[i]);
             }
 
-            axios.post('/wav2vec2-transcribe/', formData, {
+            axios.post('/transcribe/', formData, {
                 headers: { 'Content-Type': 'multipart/form-data' }
             }).then((response) => { handleBackendResponse(response)})
             .catch((error) => {handleNetworkErrors(error)})
