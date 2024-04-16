@@ -131,7 +131,7 @@ def transcribe():
     transcript = processor.batch_decode(result, skip_special_tokens=True)
     print(transcript)
     response = {'status'    : 0,
-                'transcript': 'success'}
+                'transcript': transcript}
     return response
 
 @app.route('/wav2vec2-transcribe/', methods = ['POST'])
