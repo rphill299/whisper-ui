@@ -67,32 +67,25 @@ def whisper_transcribe_folder():
 @app.route('/whisper-transcribe-files-batched/', methods = ['GET'])
 @cross_origin()
 def whisper_transcribe_file_batched():
+    print("received batched whisper transcribe request", file=PRINT_TO_CONSOLE)
     files_json = request.args.get("filenames")
 
     if files_json:
         files = json.loads(files_json) # Parse JSON string back into Python list
     else:
         files = []
-    print(files)
 
     # if no GPU, return dummy data
     if not torch.cuda.is_available() : 
         transcripts = []
         for f in files :
             transcripts.append("(transcription of " + f + " from the backend)")
-        print("RYAN HERE")
-        print(transcripts)
         return {'status': 0, 'transcript':transcripts}
 
     inputFolder = request.args.get("folder")
     inputFilePaths = [join(inputFolder, inputFilename) for inputFilename in files]
-    print("received batched whisper transcribe request", file=PRINT_TO_CONSOLE)
-    print(inputFilePaths)
     ds = load_dataset(inputFolder, data_files=files)["train"]
-    print(ds)
     ds = ds.cast_column("audio", Audio(sampling_rate=16000))
-
-    print(ds)
     raw_audio = [x["array"].astype(np.float32) for x in ds["audio"]]
 
     # process input, make sure to pass `padding='longest'` and `return_attention_mask=True`
@@ -106,7 +99,6 @@ def whisper_transcribe_file_batched():
     result = model_medium.generate(**inputs, condition_on_prev_tokens=False, temperature=(0.0, 0.2, 0.4, 0.6, 0.8, 1.0), logprob_threshold=-1.0, compression_ratio_threshold=1.35, return_timestamps=True)
 
     transcript = processor.batch_decode(result, skip_special_tokens=True)
-    print(transcript)
     response = {'status'    : 0,
                 'transcript': transcript}
     return response
