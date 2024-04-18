@@ -1,59 +1,41 @@
 import './App.css';
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import Paper from "@material-ui/core/Paper";
 import Tab from "@material-ui/core/Tab";
 import Tabs from "@material-ui/core/Tabs";
 import axios from 'axios'
 
+// this is the default return value of App.js
+export default App;
+
+// this defines App
 function App() {
- 
-//   [ this_is_the_variable, this_is_the_setter ]
+    // go to the return statement at the bottom of this function to see what an "App" is 
+    // [ this_is_the_variable, this_is_the_setter ]
 
     const [file, setFile] = useState() //stores return value of file selector
-    const [model, setModel] = useState('Whisper'); //stores model in use
     const [outputHeader, setOutputHeader] = useState(); // gives output details
-    const [output, setOutput] = useState() //store the transcription output
     const [inputDataFolder, setInputDataFolder] = useState()
+    const [outputFolder, setOutputFolder] = useState()
     const [tabIndex, setTabIndex] = useState(0);
     const [transcripts, setTranscripts] = useState([])
-    const [filenames, setFilenames] = useState([])
 
+    const [filenames, setFilenames] = useState([])
+    const [model, setModel] = useState('Whisper'); //stores model in use
     const [inputMode, setInputMode] = useState('file') // determine file vs. folder select
     const [optionsVisible, setOptionsVisible] = useState(false) // toggle options
+    const [saveOutputs, setSaveOutputs] = useState(false) // toggle whether outputs are auto-saved or not
 
     /* Simple communication with backend here 
         obtaining default data folder from backend on app  init*/
-    let defaultDataFolder // in general, this variable will be empty due to re-rendering, use inputDataFolder instead
     if (!inputDataFolder) {
         axios.get('/init/').then((response) => {
             const data = response.data
-            defaultDataFolder = data.folder
+            const defaultDataFolder = data.inputFolder
             setInputDataFolder(defaultDataFolder)
+            const defaultOutputFolder = data.outputFolder
+            setOutputFolder(defaultOutputFolder)
         }).catch((error) => {handleNetworkErrors(error)})
-    }
-
-    function handleChangeInputDataFolder(event) {
-        setInputDataFolder(event.target.value)
-    }
-
-    function handleChangeFile(event) {
-        setFile(event.target.files)
-    }
-
-    function handleChangeModel(event) {
-        setModel(event.target.value)
-    }
-
-    function handleOptionsButtonClick() {
-        setOptionsVisible(!optionsVisible)
-    }
-
-    function handleChangeInputMode(event) {
-        setInputMode(event.target.value)
-    }
-
-    function handleChangeTab(index) {
-        setTabIndex(index)
     }
 
     /* ==========================================
@@ -68,7 +50,8 @@ function App() {
         }
 
         setOutputHeader('Transcribing ' + file.length + ' file' + (file.length===1 ? '' : 's') + ' using ' + model + ':')
-        setOutput("")
+        setTranscripts("")
+        setFilenames("")
 
         if (model === "Wav2Vec2") {
             const formData = new FormData();
@@ -82,7 +65,7 @@ function App() {
                 const status = data.status
                 if (status === 0) {
                     const nl = NewlineText(data.transcript)
-                    setOutput(nl)
+                    // setOutput(nl) // no longer exists
                 } else {
                 alert(status) 
                 }
@@ -93,7 +76,11 @@ function App() {
             if (inputMode === 'file') { // pass a file
                 const filenames = Array.from(file).map(f => f.name);
                 setFilenames(filenames)
-                axios.get('/whisper-transcribe-files-batched/', {params:{'folder':inputDataFolder, 'filenames':JSON.stringify(filenames)}})
+                axios.get('/whisper-transcribe-files-batched/', {params:
+                    {'folder':inputDataFolder, 
+                    'filenames':JSON.stringify(filenames),
+                    'saveOutputs':saveOutputs,
+                    'outputFolder':outputFolder}})
                 .then((response) => {handleBackendResponse(response)})
                 .catch((error) => {handleNetworkErrors(error)})
                 } 
@@ -140,6 +127,38 @@ function App() {
         console.log(error.config);
     }
 
+    function handleChangeInputDataFolder(event) {
+        setInputDataFolder(event.target.value)
+    }
+
+    function handleChangeOutputFolder(event) {
+        setOutputFolder(event.target.value)
+    }
+
+    function handleChangeFile(event) {
+        setFile(event.target.files)
+    }
+
+    function handleChangeModel(event) {
+        setModel(event.target.value)
+    }
+
+    function handleOptionsButtonClick() {
+        setOptionsVisible(!optionsVisible)
+    }
+
+    function handleChangeInputMode(event) {
+        setInputMode(event.target.value)
+    }
+
+    function handleChangeTab(index) {
+        setTabIndex(index)
+    }
+
+    function handleChangeSaveOutputs() {
+        setSaveOutputs(!saveOutputs)
+    }
+
     return (
         <div className='App'>
             <div>
@@ -157,6 +176,10 @@ function App() {
                     handleOptionsButtonClick={handleOptionsButtonClick}
                     inputMode={inputMode}
                     handleChangeInputMode={handleChangeInputMode}
+                    saveOutputs={saveOutputs}
+                    handleChangeSaveOutputs={handleChangeSaveOutputs}
+                    outputFolder={outputFolder}
+                    handleChangeOutputFolder={handleChangeOutputFolder}
                     >
                 </Inputs>      
             </div>
@@ -174,7 +197,7 @@ function App() {
 }
 
 function Inputs({inputDataFolder, handleChangeInputDataFolder, handleChangeFile, modelInUse, handleChangeModel, handleTranscribeButtonClick, 
-    inputMode, handleChangeInputMode, optionsVisible, handleOptionsButtonClick}) {
+    inputMode, handleChangeInputMode, optionsVisible, handleOptionsButtonClick, saveOutputs, handleChangeSaveOutputs, outputFolder, handleChangeOutputFolder}) {
 
     function ModelRadioButton({model}) {
         return (
@@ -213,10 +236,21 @@ function Inputs({inputDataFolder, handleChangeInputDataFolder, handleChangeFile,
                             <label>Input Folder: </label>
                             <input type='text' defaultValue={inputDataFolder} onChange={handleChangeInputDataFolder} disabled={modelInUse === "Wav2Vec2"}/> 
                         </div>
+                        <div>
+                            <label>
+                                <input type='checkbox' checked={saveOutputs} onChange={handleChangeSaveOutputs}/>
+                                Save all output
+                            </label>
+                            {saveOutputs && 
+                            (<div>
+                                <label>Output Folder: </label>
+                                <input type='text' defaultValue={outputFolder} onChange={handleChangeOutputFolder}/>
+                            </div>)}
+                        </div>
                         <div>  
                             <label>Model: </label> 
                             <ModelRadioButton model='Whisper'></ModelRadioButton>
-                            <ModelRadioButton model='Wav2Vec2'></ModelRadioButton>    
+                            <ModelRadioButton model='Wav2Vec2'></ModelRadioButton> 
                         </div>
                     </div>
                 )}
@@ -233,7 +267,7 @@ function Outputs({outputHeader, tabIndex, handleChangeTab, transcripts, filename
     for (let i = 0; i < filenames.length; i++) {
         tabsArray.push(<Tab value={i} label={filenames[i]}/>)
     }
-    console.log(tabsArray)
+    
     return outputHeader && (
         <div>
             <h3>
@@ -248,14 +282,3 @@ function Outputs({outputHeader, tabIndex, handleChangeTab, transcripts, filename
         </div>
     );
 }
-
-export default App;
-
-
-
-{/* <Paper square>
-<Tabs value={tabIndex} onChange={(event, newIndex) => {handleChangeTab(newIndex)}}>
-    {tabsArray}
-</Tabs>
-<p>{transcripts[tabIndex]}</p>
-</Paper> */}
