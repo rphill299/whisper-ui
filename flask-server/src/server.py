@@ -19,7 +19,8 @@ app.config['CORS_HEADERS'] = 'Content-Type' #this line may or may not be unneces
 PRINT_TO_CONSOLE = sys.stderr #print to this file within endpoints to print to console
 HOME_DIR = expanduser("~") #user's home directory
 chdir(join("..", ".."))
-CURR_DIR = getcwd() #user's current directory, and project directory
+CURR_DIR = getcwd() #project directory
+PROJ_DIR = CURR_DIR
 
 model = whisper.load_model("base")
 
@@ -29,7 +30,9 @@ model = whisper.load_model("base")
 @cross_origin()
 def init():
     print("received initial request", file=PRINT_TO_CONSOLE)
-    response = {'folder'   : CURR_DIR} # returning path to main project folder with correct separators
+    outputDir = join(CURR_DIR, "outputs")
+    response = {'inputFolder'   : CURR_DIR, 
+                'outputFolder'  : outputDir} 
     return response
 
 

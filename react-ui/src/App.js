@@ -1,5 +1,5 @@
 import './App.css';
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import Paper from "@material-ui/core/Paper";
 import Tab from "@material-ui/core/Tab";
 import Tabs from "@material-ui/core/Tabs";
@@ -14,27 +14,27 @@ function App() {
     // [ this_is_the_variable, this_is_the_setter ]
 
     const [file, setFile] = useState() //stores return value of file selector
-    const [model, setModel] = useState('Whisper'); //stores model in use
     const [outputHeader, setOutputHeader] = useState(); // gives output details
-    const [output, setOutput] = useState() //store the transcription output
     const [inputDataFolder, setInputDataFolder] = useState()
+    const [outputFolder, setOutputFolder] = useState()
     const [tabIndex, setTabIndex] = useState(0);
     const [transcripts, setTranscripts] = useState([])
-    const [filenames, setFilenames] = useState([])
 
+    const [filenames, setFilenames] = useState([])
+    const [model, setModel] = useState('Whisper'); //stores model in use
     const [inputMode, setInputMode] = useState('file') // determine file vs. folder select
     const [optionsVisible, setOptionsVisible] = useState(false) // toggle options
+    const [saveOutputs, setSaveOutputs] = useState(false) // toggle whether outputs are auto-saved or not
 
     /* Simple communication with backend here 
         obtaining default data folder from backend on app  init*/
-    let defaultDataFolder // in general, this variable will be empty due to re-rendering, use inputDataFolder instead
     if (!inputDataFolder) {
         axios.get('/init/').then((response) => {
             const data = response.data
-            defaultDataFolder = data.folder
+            const defaultDataFolder = data.inputFolder
             setInputDataFolder(defaultDataFolder)
-            //defaultOutputFolder = data.outputFolder
-            //setOutputFolder(defaultOutputFolder)
+            const defaultOutputFolder = data.outputFolder
+            setOutputFolder(defaultOutputFolder)
         }).catch((error) => {handleNetworkErrors(error)})
     }
 
@@ -65,7 +65,7 @@ function App() {
                 const status = data.status
                 if (status === 0) {
                     const nl = NewlineText(data.transcript)
-                    setOutput(nl)
+                    // setOutput(nl) // no longer exists
                 } else {
                 alert(status) 
                 }
@@ -240,7 +240,7 @@ function Outputs({outputHeader, tabIndex, handleChangeTab, transcripts, filename
     for (let i = 0; i < filenames.length; i++) {
         tabsArray.push(<Tab value={i} label={filenames[i]}/>)
     }
-    console.log(tabsArray)
+    
     return outputHeader && (
         <div>
             <h3>
