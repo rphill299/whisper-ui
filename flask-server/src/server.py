@@ -74,16 +74,17 @@ def whisper_transcribe_file_batched():
         files = json.loads(files_json) # Parse JSON string back into Python list
     else:
         files = []
-
-    # if no GPU, return dummy data
-    if not torch.cuda.is_available() : 
-        transcripts = []
-        for f in files :
-            transcripts.append("(transcription of " + f + " from the backend)")
-        return {'status': 0, 'transcript':transcripts}
-
     inputFolder = request.args.get("folder")
     inputFilePaths = [join(inputFolder, inputFilename) for inputFilename in files]
+
+    # if no GPU, sequential transcribe
+    if not torch.cuda.is_available() : 
+        transcripts = []
+        for ifp in inputFilePaths :
+            transcripts.append(model.transcribe(ifp)['text'])
+        return {'status': 0, 'transcript':transcripts}
+
+    
     ds = load_dataset(inputFolder, data_files=files)["train"]
     ds = ds.cast_column("audio", Audio(sampling_rate=16000))
     raw_audio = [x["array"].astype(np.float32) for x in ds["audio"]]
