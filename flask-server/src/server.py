@@ -51,21 +51,6 @@ def whisper_transcribe_file():
                 'transcript': transcript}
     return response
 
-# transcribe a folder with Whisper
-@app.route('/whisper-transcribe-folder/', methods = ['GET'])
-@cross_origin()
-def whisper_transcribe_folder():
-    inputFolder = request.args.get("folder")
-    print("received whisper transcribe request for " + inputFolder, file=PRINT_TO_CONSOLE)
-
-    transcript = "need to implement"
-
-    ## HANDLE BATCH TRANSCRIPTION ## 
-
-    response = {'status'    : 0,
-                'transcript': transcript}
-    return response
-
 # transcribe a multiple files with Batched Whisper
 @app.route('/whisper-transcribe-files-batched/', methods = ['GET'])
 @cross_origin()
