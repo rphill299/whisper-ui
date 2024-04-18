@@ -2,8 +2,8 @@ from flask import Flask, request, jsonify
 from flask_cors import CORS, cross_origin
 import sys
 from wav2vec2_test2 import run
-from os.path import expanduser, join, splitext
-from os import getcwd, chdir
+from os.path import expanduser, join, splitext, exists
+from os import getcwd, chdir, mkdir
 import whisper
 import torchaudio
 from transformers import WhisperForConditionalGeneration, AutoProcessor
@@ -74,21 +74,27 @@ def whisper_transcribe_file_batched():
     files_json = request.args.get("filenames")
 
     if files_json:
-        files = json.loads(files_json) # Parse JSON string back into Python list
+        filenames = json.loads(files_json) # Parse JSON string back into Python list
     else:
-        files = []
+        filenames = []
     inputFolder = request.args.get("folder")
-    inputFilePaths = [join(inputFolder, inputFilename) for inputFilename in files]
+    inputFilePaths = [join(inputFolder, inputFilename) for inputFilename in filenames]
 
     # if no GPU, sequential transcribe
     if not torch.cuda.is_available() : 
         transcripts = []
         for ifp in inputFilePaths :
             transcripts.append(model.transcribe(ifp)['text'])
+
+        # check if saving outputs and save to folder 
+        if request.args.get('saveOutputs') :
+            of = request.args.get('outputFolder')
+            saveTextOutputs(of, [join(of, f.split('.')[0]+"_output.txt") for f in filenames], transcripts)
+    
         return {'status': 0, 'transcript':transcripts}
 
     
-    ds = load_dataset(inputFolder, data_files=files)["train"]
+    ds = load_dataset(inputFolder, data_files=filenames)["train"]
     ds = ds.cast_column("audio", Audio(sampling_rate=16000))
     raw_audio = [x["array"].astype(np.float32) for x in ds["audio"]]
 
@@ -117,3 +123,14 @@ def wav2vec2_transcribe():
     response = {'status'    : 0,
                 'transcript':transcript}
     return response
+
+#saves transcripts[i] under filepaths[i]
+#expects outputfolder to be a prefix of each filepath
+def saveTextOutputs(outputFolder, filepaths, transcripts) :
+    if not exists(outputFolder) :
+        #create outputfolder if not exists
+        mkdir(outputFolder)
+    for idx, fp in enumerate(filepaths):
+        file = open(fp, 'w+') #open file in write mode
+        file.write(transcripts[idx])
+        file.close()
