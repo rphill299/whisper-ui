@@ -127,6 +127,10 @@ function App() {
         setInputDataFolder(event.target.value)
     }
 
+    function handleChangeOutputFolder(event) {
+        setOutputFolder(event.target.value)
+    }
+
     function handleChangeFile(event) {
         setFile(event.target.files)
     }
@@ -170,6 +174,8 @@ function App() {
                     handleChangeInputMode={handleChangeInputMode}
                     saveOutputs={saveOutputs}
                     handleChangeSaveOutputs={handleChangeSaveOutputs}
+                    outputFolder={outputFolder}
+                    handleChangeOutputFolder={handleChangeOutputFolder}
                     >
                 </Inputs>      
             </div>
@@ -187,7 +193,7 @@ function App() {
 }
 
 function Inputs({inputDataFolder, handleChangeInputDataFolder, handleChangeFile, modelInUse, handleChangeModel, handleTranscribeButtonClick, 
-    inputMode, handleChangeInputMode, optionsVisible, handleOptionsButtonClick, saveOutputs, handleChangeSaveOutputs}) {
+    inputMode, handleChangeInputMode, optionsVisible, handleOptionsButtonClick, saveOutputs, handleChangeSaveOutputs, outputFolder, handleChangeOutputFolder}) {
 
     function ModelRadioButton({model}) {
         return (
@@ -226,10 +232,17 @@ function Inputs({inputDataFolder, handleChangeInputDataFolder, handleChangeFile,
                             <label>Input Folder: </label>
                             <input type='text' defaultValue={inputDataFolder} onChange={handleChangeInputDataFolder} disabled={modelInUse === "Wav2Vec2"}/> 
                         </div>
-                        <label>
-                            <input type='checkbox' checked={saveOutputs} onChange={handleChangeSaveOutputs}/>
-                            Save all output
-                        </label>
+                        <div>
+                            <label>
+                                <input type='checkbox' checked={saveOutputs} onChange={handleChangeSaveOutputs}/>
+                                Save all output
+                            </label>
+                            {saveOutputs && 
+                            (<div>
+                                <label>Output Folder: </label>
+                                <input type='text' defaultValue={outputFolder} onChange={handleChangeOutputFolder}/>
+                            </div>)}
+                        </div>
                         <div>  
                             <label>Model: </label> 
                             <ModelRadioButton model='Whisper'></ModelRadioButton>
