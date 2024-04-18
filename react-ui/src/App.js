@@ -49,7 +49,7 @@ function App() {
             return
         }
 
-        setOutputHeader('Transcribing ' + file.length + ' file' + (file.length===1 ? '' : 's') + ' using ' + model + ':')
+        setOutputHeader("")
         setTranscripts("")
         setFilenames("")
 
@@ -73,22 +73,17 @@ function App() {
             }).catch((error) => {handleNetworkErrors(error)})
         } 
         else if (model === "Whisper") {
-            if (inputMode === 'file') { // pass a file
-                const filenames = Array.from(file).map(f => f.name);
-                setFilenames(filenames)
-                axios.get('/whisper-transcribe-files-batched/', {params:
-                    {'folder':inputDataFolder, 
-                    'filenames':JSON.stringify(filenames),
-                    'saveOutputs':saveOutputs,
-                    'outputFolder':outputFolder}})
-                .then((response) => {handleBackendResponse(response)})
-                .catch((error) => {handleNetworkErrors(error)})
-                } 
-            else if (inputMode === 'folder') { // pass a folder
-                axios.get('/whisper-transcribe-folder', {params:{'folder':inputDataFolder}})
-                .then((response) => { handleBackendResponse(response)})
-                .catch((error) => {handleNetworkErrors(error)})
-            }
+            const fns = Array.from(file).map(f => f.name);
+            const filenames = fns.filter((fn) => fn.endsWith(".wav") || fn.endsWith(".mp3") || fn.endsWith(".m4a"))
+            setFilenames(filenames)
+            setOutputHeader('Transcribing ' + filenames.length + ' file' + (filenames.length===1 ? '' : 's') + ' using ' + model + ':')
+            axios.get('/whisper-transcribe-files-batched/', {params:
+                {'folder':inputDataFolder, 
+                'filenames':JSON.stringify(filenames),
+                'saveOutputs':saveOutputs,
+                'outputFolder':outputFolder}})
+            .then((response) => {handleBackendResponse(response)})
+            .catch((error) => {handleNetworkErrors(error)})
         }
     }
 
