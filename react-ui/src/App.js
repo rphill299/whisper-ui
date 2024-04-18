@@ -5,9 +5,13 @@ import Tab from "@material-ui/core/Tab";
 import Tabs from "@material-ui/core/Tabs";
 import axios from 'axios'
 
+// this is the default return value of App.js
+export default App;
+
+// this defines App
 function App() {
- 
-//   [ this_is_the_variable, this_is_the_setter ]
+    // go to the return statement at the bottom of this function to see what an "App" is 
+    // [ this_is_the_variable, this_is_the_setter ]
 
     const [file, setFile] = useState() //stores return value of file selector
     const [model, setModel] = useState('Whisper'); //stores model in use
@@ -29,31 +33,9 @@ function App() {
             const data = response.data
             defaultDataFolder = data.folder
             setInputDataFolder(defaultDataFolder)
+            //defaultOutputFolder = data.outputFolder
+            //setOutputFolder(defaultOutputFolder)
         }).catch((error) => {handleNetworkErrors(error)})
-    }
-
-    function handleChangeInputDataFolder(event) {
-        setInputDataFolder(event.target.value)
-    }
-
-    function handleChangeFile(event) {
-        setFile(event.target.files)
-    }
-
-    function handleChangeModel(event) {
-        setModel(event.target.value)
-    }
-
-    function handleOptionsButtonClick() {
-        setOptionsVisible(!optionsVisible)
-    }
-
-    function handleChangeInputMode(event) {
-        setInputMode(event.target.value)
-    }
-
-    function handleChangeTab(index) {
-        setTabIndex(index)
     }
 
     /* ==========================================
@@ -68,7 +50,8 @@ function App() {
         }
 
         setOutputHeader('Transcribing ' + file.length + ' file' + (file.length===1 ? '' : 's') + ' using ' + model + ':')
-        setOutput("")
+        setTranscripts("")
+        setFilenames("")
 
         if (model === "Wav2Vec2") {
             const formData = new FormData();
@@ -138,6 +121,30 @@ function App() {
         console.log('Error', error.message);
         }
         console.log(error.config);
+    }
+
+    function handleChangeInputDataFolder(event) {
+        setInputDataFolder(event.target.value)
+    }
+
+    function handleChangeFile(event) {
+        setFile(event.target.files)
+    }
+
+    function handleChangeModel(event) {
+        setModel(event.target.value)
+    }
+
+    function handleOptionsButtonClick() {
+        setOptionsVisible(!optionsVisible)
+    }
+
+    function handleChangeInputMode(event) {
+        setInputMode(event.target.value)
+    }
+
+    function handleChangeTab(index) {
+        setTabIndex(index)
     }
 
     return (
@@ -248,14 +255,3 @@ function Outputs({outputHeader, tabIndex, handleChangeTab, transcripts, filename
         </div>
     );
 }
-
-export default App;
-
-
-
-{/* <Paper square>
-<Tabs value={tabIndex} onChange={(event, newIndex) => {handleChangeTab(newIndex)}}>
-    {tabsArray}
-</Tabs>
-<p>{transcripts[tabIndex]}</p>
-</Paper> */}
