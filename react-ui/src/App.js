@@ -95,11 +95,20 @@ function App() {
         }
         else if (model === "Whisper") {
             if (inputMode === 'file') { // pass a file
-                const filenames = Array.from(file).map(f => f.name);
-                setFilenames(filenames)
-                axios.get('/whisper-transcribe-files-batched/', {params:{'folder':inputDataFolder, 'filenames':JSON.stringify(filenames)}})
-                .then((response) => {handleBackendResponse(response)})
-                .catch((error) => {handleNetworkErrors(error)})
+                const filenames = Array.from(files).map(f => f.name);
+                    setFilenames(filenames)
+                    // axios.get('/whisper-transcribe-files-batched/', {params:{'folder':inputDataFolder, 'filenames':JSON.stringify(filenames)}})
+                    // .then((response) => {handleBackendResponse(response)})
+                    // .catch((error) => {handleNetworkErrors(error)})
+                    const formData = new FormData();
+                    for (let i=0; i<files.length; i++) {
+                        formData.append(files[i].name, files[i]);
+                    }
+
+                    axios.post('/transcribe/', formData, {
+                        headers: { 'Content-Type': 'multipart/form-data' }
+                    }).then((response) => { handleBackendResponse(response)})
+                    .catch((error) => {handleNetworkErrors(error)})
                 } 
             else if (inputMode === 'folder') { // pass a folder
                 axios.get('/whisper-transcribe-folder', {params:{'folder':inputDataFolder}})
@@ -111,6 +120,7 @@ function App() {
 
     function handleBackendResponse(response) {
         const data = response.data;
+        console.log(data)
         const status = data.status;
         if (status === 0) {
             setTranscripts(data.transcript)
