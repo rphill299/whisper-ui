@@ -147,6 +147,10 @@ function App() {
         setTabIndex(index)
     }
 
+    function handleChangeSaveOutputs() {
+        setSaveOutputs(!saveOutputs)
+    }
+
     return (
         <div className='App'>
             <div>
@@ -164,6 +168,8 @@ function App() {
                     handleOptionsButtonClick={handleOptionsButtonClick}
                     inputMode={inputMode}
                     handleChangeInputMode={handleChangeInputMode}
+                    saveOutputs={saveOutputs}
+                    handleChangeSaveOutputs={handleChangeSaveOutputs}
                     >
                 </Inputs>      
             </div>
@@ -181,7 +187,7 @@ function App() {
 }
 
 function Inputs({inputDataFolder, handleChangeInputDataFolder, handleChangeFile, modelInUse, handleChangeModel, handleTranscribeButtonClick, 
-    inputMode, handleChangeInputMode, optionsVisible, handleOptionsButtonClick}) {
+    inputMode, handleChangeInputMode, optionsVisible, handleOptionsButtonClick, saveOutputs, handleChangeSaveOutputs}) {
 
     function ModelRadioButton({model}) {
         return (
@@ -220,10 +226,14 @@ function Inputs({inputDataFolder, handleChangeInputDataFolder, handleChangeFile,
                             <label>Input Folder: </label>
                             <input type='text' defaultValue={inputDataFolder} onChange={handleChangeInputDataFolder} disabled={modelInUse === "Wav2Vec2"}/> 
                         </div>
+                        <label>
+                            <input type='checkbox' checked={saveOutputs} onChange={handleChangeSaveOutputs}/>
+                            Save all output
+                        </label>
                         <div>  
                             <label>Model: </label> 
                             <ModelRadioButton model='Whisper'></ModelRadioButton>
-                            <ModelRadioButton model='Wav2Vec2'></ModelRadioButton>    
+                            <ModelRadioButton model='Wav2Vec2'></ModelRadioButton> 
                         </div>
                     </div>
                 )}
