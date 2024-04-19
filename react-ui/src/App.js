@@ -131,6 +131,10 @@ function App() {
         setInputDataFolder(event.target.value)
     }
 
+    function handleChangeOutputFolder(event) {
+        setOutputFolder(event.target.value)
+    }
+
     function handleChangeFiles(event) {
         setFiles(event.target.files)
     }
