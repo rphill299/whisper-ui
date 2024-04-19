@@ -1,7 +1,7 @@
 from flask import Flask, request, jsonify
 from flask_cors import CORS, cross_origin
 import sys
-from wav2vec2_test2 import run
+from wav2vec2 import run
 from utils import read_file
 from os.path import expanduser, join, splitext, exists
 from os import getcwd, chdir, mkdir

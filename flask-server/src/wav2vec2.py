@@ -1,4 +1,6 @@
 """
+Adapted from:
+
 Speech Recognition with Wav2Vec2
 ================================
 
@@ -8,6 +10,8 @@ This tutorial shows how to perform speech recognition using using
 pre-trained models from wav2vec 2.0
 [`paper <https://arxiv.org/abs/2006.11477>`__].
 
+
+Creates a Wav2Vec2 transcription endpoint
 """
 
 
@@ -38,24 +42,10 @@ pre-trained models from wav2vec 2.0
 import torch
 import torchaudio
 
-print(torch.__version__)
-print(torchaudio.__version__)
-
 torch.random.manual_seed(0)
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
-print(device)
-
-######################################################################
-#
-
-#import IPython
-#import matplotlib.pyplot as plt
-#from torchaudio.utils import download_asset
-
-#SPEECH_FILE = download_asset("tutorial-assets/Lab41-SRI-VOiCES-src-sp0307-ch127535-sg0042.wav")
-
-def run(*,file = 'Motiversity_[fLeJJPxua3E].wav', flag=True):
+def run(*, file=None, flag=True):
     ######################################################################
     # Creating a pipeline
     # -------------------
@@ -86,32 +76,12 @@ def run(*,file = 'Motiversity_[fLeJJPxua3E].wav', flag=True):
     
     bundle = torchaudio.pipelines.WAV2VEC2_ASR_BASE_960H
     
-    print("Sample Rate:", bundle.sample_rate)
-    
-    print("Labels:", bundle.get_labels())
-    
-    
     ######################################################################
     # Model can be constructed as following. This process will automatically
     # fetch the pre-trained weights and load it into the model.
     #
     
     model = bundle.get_model().to(device)
-    
-    print(model.__class__)
-    
-    
-    ######################################################################
-    # Loading data
-    # ------------
-    #
-    # We will use the speech data from `VOiCES
-    # dataset <https://iqtlabs.github.io/voices/>`__, which is licensed under
-    # Creative Commos BY 4.0.
-    #
-    
-    #IPython.display.Audio(SPEECH_FILE)
-    
     
     ######################################################################
     # To load data, we use :py:func:`torchaudio.load`.
@@ -264,8 +234,8 @@ def run(*,file = 'Motiversity_[fLeJJPxua3E].wav', flag=True):
     
     if flag:
         print(transcript)
-    else: return transcript
-    #IPython.display.Audio(SPEECH_FILE)
+    else:
+        return transcript
     
     
     ######################################################################

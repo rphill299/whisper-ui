@@ -1,7 +1,5 @@
 import io
 import librosa
-import whisper
-import sys
 
 def read_file(file):
     buf = io.BytesIO(file.read())
