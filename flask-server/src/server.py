@@ -3,8 +3,8 @@ from flask_cors import CORS, cross_origin
 import sys
 from wav2vec2_test2 import run
 from utils import read_file
-from os.path import expanduser, join, splitext
-from os import getcwd, chdir
+from os.path import expanduser, join, splitext, exists
+from os import getcwd, chdir, mkdir
 import whisper
 import torchaudio
 from transformers import WhisperForConditionalGeneration, AutoProcessor
@@ -20,7 +20,8 @@ app.config['CORS_HEADERS'] = 'Content-Type' #this line may or may not be unneces
 PRINT_TO_CONSOLE = sys.stderr #print to this file within endpoints to print to console
 HOME_DIR = expanduser("~") #user's home directory
 chdir(join("..", ".."))
-CURR_DIR = getcwd() #user's current directory, and project directory
+CURR_DIR = getcwd() #project directory
+PROJ_DIR = CURR_DIR
 
 model = whisper.load_model("base")
 
@@ -30,7 +31,9 @@ model = whisper.load_model("base")
 @cross_origin()
 def init():
     print("received initial request", file=PRINT_TO_CONSOLE)
-    response = {'folder'   : CURR_DIR} # returning path to main project folder with correct separators
+    outputDir = join(CURR_DIR, "outputs")
+    response = {'inputFolder'   : CURR_DIR, 
+                'outputFolder'  : outputDir} 
     return response
 
 
@@ -49,52 +52,36 @@ def whisper_transcribe_file():
                 'transcript': transcript}
     return response
 
-# transcribe a folder with Whisper
-@app.route('/whisper-transcribe-folder/', methods = ['GET'])
-@cross_origin()
-def whisper_transcribe_folder():
-    inputFolder = request.args.get("folder")
-    print("received whisper transcribe request for " + inputFolder, file=PRINT_TO_CONSOLE)
-
-    transcript = "need to implement"
-
-    ## HANDLE BATCH TRANSCRIPTION ## 
-
-    response = {'status'    : 0,
-                'transcript': transcript}
-    return response
-
 # transcribe a multiple files with Batched Whisper
 @app.route('/whisper-transcribe-files-batched/', methods = ['GET'])
 @cross_origin()
 def whisper_transcribe_file_batched():
-    
+    print("received batched whisper transcribe request", file=PRINT_TO_CONSOLE)
     files_json = request.args.get("filenames")
 
     if files_json:
-        files = json.loads(files_json) # Parse JSON string back into Python list
+        filenames = json.loads(files_json) # Parse JSON string back into Python list
     else:
-        files = []
-    print(files)
+        filenames = []
+    inputFolder = request.args.get("folder")
+    inputFilePaths = [join(inputFolder, inputFilename) for inputFilename in filenames]
 
-    # if no GPU, return dummy data
+    # if no GPU, sequential transcribe
     if not torch.cuda.is_available() : 
         transcripts = []
-        for f in files :
-            transcripts.append("(transcription of " + f + " from the backend)")
-        print("RYAN HERE")
-        print(transcripts)
+        for ifp in inputFilePaths :
+            transcripts.append(model.transcribe(ifp)['text'])
+
+        # check if saving outputs and save to folder 
+        if request.args.get('saveOutputs') :
+            of = request.args.get('outputFolder')
+            saveTextOutputs(of, [join(of, f.split('.')[0]+"_output.txt") for f in filenames], transcripts)
+    
         return {'status': 0, 'transcript':transcripts}
 
-    inputFolder = request.args.get("folder")
-    inputFilePaths = [join(inputFolder, inputFilename) for inputFilename in files]
-    print("received batched whisper transcribe request", file=PRINT_TO_CONSOLE)
-    print(inputFilePaths)
-    ds = load_dataset(inputFolder, data_files=files)["train"]
-    print(ds)
+    
+    ds = load_dataset(inputFolder, data_files=filenames)["train"]
     ds = ds.cast_column("audio", Audio(sampling_rate=16000))
-
-    print(ds)
     raw_audio = [x["array"].astype(np.float32) for x in ds["audio"]]
 
     # process input, make sure to pass `padding='longest'` and `return_attention_mask=True`
@@ -108,7 +95,6 @@ def whisper_transcribe_file_batched():
     result = model_medium.generate(**inputs, condition_on_prev_tokens=False, temperature=(0.0, 0.2, 0.4, 0.6, 0.8, 1.0), logprob_threshold=-1.0, compression_ratio_threshold=1.35, return_timestamps=True)
 
     transcript = processor.batch_decode(result, skip_special_tokens=True)
-    print(transcript)
     response = {'status'    : 0,
                 'transcript': transcript}
     return response
@@ -116,6 +102,7 @@ def whisper_transcribe_file_batched():
 @app.route('/transcribe/', methods = ['POST'])
 @cross_origin()
 def transcribe():
+    print("received batched whisper transcribe request", file=PRINT_TO_CONSOLE)
     if not torch.cuda.is_available():
         transcript = []
         for _file in request.files.values():
@@ -152,3 +139,14 @@ def wav2vec2_transcribe():
     response = {'status'    : 0,
                 'transcript':'4'}
     return response
+
+#saves transcripts[i] under filepaths[i]
+#expects outputfolder to be a prefix of each filepath
+def saveTextOutputs(outputFolder, filepaths, transcripts) :
+    if not exists(outputFolder) :
+        #create outputfolder if not exists
+        mkdir(outputFolder)
+    for idx, fp in enumerate(filepaths):
+        file = open(fp, 'w+') #open file in write mode
+        file.write(transcripts[idx])
+        file.close()

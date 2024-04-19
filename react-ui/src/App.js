@@ -1,70 +1,43 @@
 import './App.css';
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import Paper from "@material-ui/core/Paper";
 import Tab from "@material-ui/core/Tab";
 import Tabs from "@material-ui/core/Tabs";
 import axios from 'axios'
 
+// this is the default return value of App.js
+export default App;
+
+// this defines App
 function App() {
- 
-//   [ this_is_the_variable, this_is_the_setter ]
+    // go to the return statement at the bottom of this function to see what an "App" is 
+    // [ this_is_the_variable, this_is_the_setter ]
 
     const [files, setFiles] = useState([]) //stores return value of file selector
-    const [model, setModel] = useState('Whisper'); //stores model in use
     const [outputHeader, setOutputHeader] = useState(); // gives output details
-    const [output, setOutput] = useState() //store the transcription output
     const [inputDataFolder, setInputDataFolder] = useState()
+    const [outputFolder, setOutputFolder] = useState()
     const [tabIndex, setTabIndex] = useState(0);
     const [transcripts, setTranscripts] = useState([])
-    const [filenames, setFilenames] = useState([])
 
+    const [filenames, setFilenames] = useState([])
+    const [model, setModel] = useState('Whisper'); //stores model in use
     const [inputMode, setInputMode] = useState('file') // determine file vs. folder select
     const [optionsVisible, setOptionsVisible] = useState(false) // toggle options
+    const [saveOutputs, setSaveOutputs] = useState(false) // toggle whether outputs are auto-saved or not
 
     /* Simple communication with backend here 
         obtaining default data folder from backend on app  init*/
-    let defaultDataFolder // in general, this variable will be empty due to re-rendering, use inputDataFolder instead
     if (!inputDataFolder) {
         axios.get('/init/').then((response) => {
             const data = response.data
-            defaultDataFolder = data.folder
+            const defaultDataFolder = data.inputFolder
             setInputDataFolder(defaultDataFolder)
+            const defaultOutputFolder = data.outputFolder
+            setOutputFolder(defaultOutputFolder)
         }).catch((error) => {handleNetworkErrors(error)})
     }
-
-    function handleChangeInputDataFolder(event) {
-        setInputDataFolder(event.target.value)
-    }
-
-    function handleChangeFiles(event) {
-        setFiles(event.target.files)
-    }
-    
-    function handleAddFiles(event) {
-        var newFiles = [...files]
-        for (let i=0; i<event.target.files.length; i++){
-            newFiles = [...newFiles, event.target.files[i]]
-            console.log(event.target.files[i].name)
-        }
-        setFiles(newFiles)
-    }
-
-    function handleChangeModel(event) {
-        setModel(event.target.value)
-    }
-
-    function handleOptionsButtonClick() {
-        setOptionsVisible(!optionsVisible)
-    }
-
-    function handleChangeInputMode(event) {
-        setInputMode(event.target.value)
-    }
-
-    function handleChangeTab(index) {
-        setTabIndex(index)
-    }
-
+  
     /* ==========================================
 
         Handling communication with backend here
@@ -92,36 +65,29 @@ function App() {
             .catch((error) => {handleNetworkErrors(error)})
         }
         else if (model === "Whisper") {
-            if (inputMode === 'file') { // pass a file
-                const fns = Array.from(files).map(f => f.name);
-                const filenames = fns.filter((fn) => fn.endsWith(".wav") || fn.endsWith(".mp3") || fn.endsWith(".m4a"))
-                setFilenames(filenames)
-                setOutputHeader('Transcribing ' + filenames.length + ' file' + (filenames.length===1 ? '' : 's') + ' using ' + model + ':')
-                // axios.get('/whisper-transcribe-files-batched/', {params:{'folder':inputDataFolder, 'filenames':JSON.stringify(filenames)}})
-                // .then((response) => {handleBackendResponse(response)})
-                // .catch((error) => {handleNetworkErrors(error)})
-                const formData = new FormData();
-                for (let i=0; i<files.length; i++) {
-                    const fileName = files[i].name;
-                    if (fileName.endsWith(".mp3") || fileName.endsWith(".wav") || fileName.endsWith(".m4a")) {
-                        formData.append(fileName, files[i]);
-                    }
-                    else {
-                        console.log("Error")
-                    }
-
+            const fns = Array.from(files).map(f => f.name);
+            const filenames = fns.filter((fn) => fn.endsWith(".wav") || fn.endsWith(".mp3") || fn.endsWith(".m4a"))
+            setFilenames(filenames)
+            setOutputHeader('Transcribing ' + filenames.length + ' file' + (filenames.length===1 ? '' : 's') + ' using ' + model + ':')
+            // axios.get('/whisper-transcribe-files-batched/', {params:{'folder':inputDataFolder, 'filenames':JSON.stringify(filenames)}})
+            // .then((response) => {handleBackendResponse(response)})
+            // .catch((error) => {handleNetworkErrors(error)})
+            const formData = new FormData();
+            for (let i=0; i<files.length; i++) {
+                const fileName = files[i].name;
+                if (fileName.endsWith(".mp3") || fileName.endsWith(".wav") || fileName.endsWith(".m4a")) {
+                    formData.append(fileName, files[i]);
+                }
+                else {
+                    console.log("Error")
                 }
 
-                axios.post('/transcribe/', formData, {
-                    headers: { 'Content-Type': 'multipart/form-data' }
-                }).then((response) => { handleBackendResponse(response)})
-                .catch((error) => {handleNetworkErrors(error)})
-            } 
-            else if (inputMode === 'folder') { // pass a folder
-                axios.get('/whisper-transcribe-folder', {params:{'folder':inputDataFolder}})
-                .then((response) => { handleBackendResponse(response)})
-                .catch((error) => {handleNetworkErrors(error)})
             }
+
+            axios.post('/transcribe/', formData, {
+                headers: { 'Content-Type': 'multipart/form-data' }
+            }).then((response) => { handleBackendResponse(response)})
+            .catch((error) => {handleNetworkErrors(error)})
         }
     }
 
@@ -161,6 +127,43 @@ function App() {
         console.log(error.config);
     }
 
+    function handleChangeInputDataFolder(event) {
+        setInputDataFolder(event.target.value)
+    }
+
+    function handleChangeFiles(event) {
+        setFiles(event.target.files)
+    }
+    
+    function handleAddFiles(event) {
+        var newFiles = [...files]
+        for (let i=0; i<event.target.files.length; i++){
+            newFiles = [...newFiles, event.target.files[i]]
+            console.log(event.target.files[i].name)
+        }
+        setFiles(newFiles)
+    }
+
+    function handleChangeModel(event) {
+        setModel(event.target.value)
+    }
+
+    function handleOptionsButtonClick() {
+        setOptionsVisible(!optionsVisible)
+    }
+
+    function handleChangeInputMode(event) {
+        setInputMode(event.target.value)
+    }
+
+    function handleChangeTab(index) {
+        setTabIndex(index)
+    }
+
+    function handleChangeSaveOutputs() {
+        setSaveOutputs(!saveOutputs)
+    }
+
     return (
         <div className='App'>
             <div>
@@ -179,6 +182,10 @@ function App() {
                     handleOptionsButtonClick={handleOptionsButtonClick}
                     inputMode={inputMode}
                     handleChangeInputMode={handleChangeInputMode}
+                    saveOutputs={saveOutputs}
+                    handleChangeSaveOutputs={handleChangeSaveOutputs}
+                    outputFolder={outputFolder}
+                    handleChangeOutputFolder={handleChangeOutputFolder}
                     >
                 </Inputs>      
             </div>
@@ -195,8 +202,8 @@ function App() {
     );
 }
 
-function Inputs({inputDataFolder, handleChangeInputDataFolder, handleChangeFiles, modelInUse, handleChangeModel, handleTranscribeButtonClick,
-    inputMode, handleChangeInputMode, optionsVisible, handleOptionsButtonClick}) {
+function Inputs({inputDataFolder, handleChangeInputDataFolder, handleChangeFiles, modelInUse, handleChangeModel, handleTranscribeButtonClick, 
+    inputMode, handleChangeInputMode, optionsVisible, handleOptionsButtonClick, saveOutputs, handleChangeSaveOutputs, outputFolder, handleChangeOutputFolder}) {
 
     function ModelRadioButton({model}) {
         return (
@@ -235,10 +242,21 @@ function Inputs({inputDataFolder, handleChangeInputDataFolder, handleChangeFiles
                             <label>Input Folder: </label>
                             <input type='text' defaultValue={inputDataFolder} onChange={handleChangeInputDataFolder} disabled={modelInUse === "Wav2Vec2"}/> 
                         </div> */}
+                        <div>
+                            <label>
+                                <input type='checkbox' checked={saveOutputs} onChange={handleChangeSaveOutputs}/>
+                                Save all output
+                            </label>
+                            {saveOutputs && 
+                            (<div>
+                                <label>Output Folder: </label>
+                                <input type='text' defaultValue={outputFolder} onChange={handleChangeOutputFolder}/>
+                            </div>)}
+                        </div>
                         <div>  
                             <label>Model: </label> 
                             <ModelRadioButton model='Whisper'></ModelRadioButton>
-                            <ModelRadioButton model='Wav2Vec2'></ModelRadioButton>    
+                            <ModelRadioButton model='Wav2Vec2'></ModelRadioButton> 
                         </div>
                     </div>
                 )}
@@ -255,7 +273,7 @@ function Outputs({outputHeader, tabIndex, handleChangeTab, transcripts, filename
     for (let i = 0; i < filenames.length; i++) {
         tabsArray.push(<Tab value={i} label={filenames[i]}/>)
     }
-    console.log(tabsArray)
+    
     return outputHeader && (
         <div>
             <h3>
@@ -270,5 +288,3 @@ function Outputs({outputHeader, tabIndex, handleChangeTab, transcripts, filename
         </div>
     );
 }
-
-export default App;
