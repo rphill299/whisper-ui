@@ -13,7 +13,7 @@ function App() {
     // go to the return statement at the bottom of this function to see what an "App" is 
     // [ this_is_the_variable, this_is_the_setter ]
 
-    const [file, setFile] = useState() //stores return value of file selector
+    const [files, setFiles] = useState([]) //stores return value of file selector
     const [outputHeader, setOutputHeader] = useState(); // gives output details
     const [inputDataFolder, setInputDataFolder] = useState()
     const [outputFolder, setOutputFolder] = useState()
@@ -37,58 +37,63 @@ function App() {
             setOutputFolder(defaultOutputFolder)
         }).catch((error) => {handleNetworkErrors(error)})
     }
-
+  
     /* ==========================================
 
         Handling communication with backend here
        ==========================================
     */
     function handleTranscribeButtonClick() {
-        if (!file) {
+        if (!files || files.length === 0) {
             alert("You must select a file to transcribe.")
             return
         }
 
         setOutputHeader("")
-        setTranscripts("")
-        setFilenames("")
+        setFilenames([])
+        setTranscripts([])
 
         if (model === "Wav2Vec2") {
             const formData = new FormData();
+            for (let i=0; i<files.length; i++) {
+                formData.append(files[i].name, files[i]);
+            }
 
-            formData.append("file", file);
-
-            axios.post('/wav2vec2-transcribe/', formData, {
+            axios.post('/transcribe/', formData, {
                 headers: { 'Content-Type': 'multipart/form-data' }
-            }).then((response) => {
-                const data = response.data
-                const status = data.status
-                if (status === 0) {
-                    const nl = NewlineText(data.transcript)
-                    // setOutput(nl) // no longer exists
-                } else {
-                alert(status) 
-                }
-
-            }).catch((error) => {handleNetworkErrors(error)})
-        } 
+            }).then((response) => { handleBackendResponse(response)})
+            .catch((error) => {handleNetworkErrors(error)})
+        }
         else if (model === "Whisper") {
-            const fns = Array.from(file).map(f => f.name);
+            const fns = Array.from(files).map(f => f.name);
             const filenames = fns.filter((fn) => fn.endsWith(".wav") || fn.endsWith(".mp3") || fn.endsWith(".m4a"))
             setFilenames(filenames)
             setOutputHeader('Transcribing ' + filenames.length + ' file' + (filenames.length===1 ? '' : 's') + ' using ' + model + ':')
-            axios.get('/whisper-transcribe-files-batched/', {params:
-                {'folder':inputDataFolder, 
-                'filenames':JSON.stringify(filenames),
-                'saveOutputs':saveOutputs,
-                'outputFolder':outputFolder}})
-            .then((response) => {handleBackendResponse(response)})
+            // axios.get('/whisper-transcribe-files-batched/', {params:{'folder':inputDataFolder, 'filenames':JSON.stringify(filenames)}})
+            // .then((response) => {handleBackendResponse(response)})
+            // .catch((error) => {handleNetworkErrors(error)})
+            const formData = new FormData();
+            for (let i=0; i<files.length; i++) {
+                const fileName = files[i].name;
+                if (fileName.endsWith(".mp3") || fileName.endsWith(".wav") || fileName.endsWith(".m4a")) {
+                    formData.append(fileName, files[i]);
+                }
+                else {
+                    console.log("Error")
+                }
+
+            }
+
+            axios.post('/transcribe/', formData, {
+                headers: { 'Content-Type': 'multipart/form-data' }
+            }).then((response) => { handleBackendResponse(response)})
             .catch((error) => {handleNetworkErrors(error)})
         }
     }
 
     function handleBackendResponse(response) {
         const data = response.data;
+        console.log(data)
         const status = data.status;
         if (status === 0) {
             setTranscripts(data.transcript)
@@ -130,8 +135,17 @@ function App() {
         setOutputFolder(event.target.value)
     }
 
-    function handleChangeFile(event) {
-        setFile(event.target.files)
+    function handleChangeFiles(event) {
+        setFiles(event.target.files)
+    }
+    
+    function handleAddFiles(event) {
+        var newFiles = [...files]
+        for (let i=0; i<event.target.files.length; i++){
+            newFiles = [...newFiles, event.target.files[i]]
+            console.log(event.target.files[i].name)
+        }
+        setFiles(newFiles)
     }
 
     function handleChangeModel(event) {
@@ -163,7 +177,8 @@ function App() {
                 <Inputs 
                     inputDataFolder={inputDataFolder}
                     handleChangeInputDataFolder={handleChangeInputDataFolder}
-                    handleChangeFile={handleChangeFile} 
+                    handleChangeFiles={handleChangeFiles} 
+                    // handleChangeFiles={handleAddFiles}
                     handleChangeModel={handleChangeModel}
                     handleTranscribeButtonClick={handleTranscribeButtonClick}
                     modelInUse={model}
@@ -191,7 +206,7 @@ function App() {
     );
 }
 
-function Inputs({inputDataFolder, handleChangeInputDataFolder, handleChangeFile, modelInUse, handleChangeModel, handleTranscribeButtonClick, 
+function Inputs({inputDataFolder, handleChangeInputDataFolder, handleChangeFiles, modelInUse, handleChangeModel, handleTranscribeButtonClick, 
     inputMode, handleChangeInputMode, optionsVisible, handleOptionsButtonClick, saveOutputs, handleChangeSaveOutputs, outputFolder, handleChangeOutputFolder}) {
 
     function ModelRadioButton({model}) {
@@ -221,16 +236,16 @@ function Inputs({inputDataFolder, handleChangeInputDataFolder, handleChangeFile,
                 <InputModeRadioButton mode="folder" label={"I have a folder"}></InputModeRadioButton>
             </div>
             <div>
-                <input type='file' multiple directory={(inputMode==='folder')&&""} webkitdirectory={(inputMode==='folder')&&""} defaultValue={inputDataFolder} onChange={handleChangeFile}/>
+                <input type='file' multiple directory={(inputMode==='folder')&&""} webkitdirectory={(inputMode==='folder')&&""} defaultValue={inputDataFolder} onChange={handleChangeFiles}/>
             </div>
             <div>
                 <button onClick={handleOptionsButtonClick}>{(optionsVisible ? "Hide " : "") + "Options"}</button>
                 {optionsVisible && (
                     <div>
-                        <div>
+                        {/* <div>
                             <label>Input Folder: </label>
                             <input type='text' defaultValue={inputDataFolder} onChange={handleChangeInputDataFolder} disabled={modelInUse === "Wav2Vec2"}/> 
-                        </div>
+                        </div> */}
                         <div>
                             <label>
                                 <input type='checkbox' checked={saveOutputs} onChange={handleChangeSaveOutputs}/>
