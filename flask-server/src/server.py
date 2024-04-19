@@ -116,19 +116,26 @@ def whisper_transcribe_file_batched():
 @app.route('/transcribe/', methods = ['POST'])
 @cross_origin()
 def transcribe():
-    
-    raw_audio = [read_file(_file) for _file in request.files.values()]
-    # process input, make sure to pass `padding='longest'` and `return_attention_mask=True`
-    processor = AutoProcessor.from_pretrained("openai/whisper-medium.en")
-    inputs = processor(raw_audio, return_tensors="pt", truncation=False, padding="longest", return_attention_mask=True, sampling_rate=16_000)
-    inputs = inputs.to("cuda", torch.float16)
-    model_medium = WhisperForConditionalGeneration.from_pretrained("openai/whisper-medium.en", torch_dtype=torch.float16)
-    model_medium.to("cuda")
+    if not torch.cuda.is_available():
+        transcript = []
+        for _file in request.files.values():
+            #print("Im here")
+            audio = read_file(_file)
+            transcript.append(model.transcribe(audio)['text'])
+            #print(transcript)
+    else:
+        raw_audio = [read_file(_file) for _file in request.files.values()]
+        # process input, make sure to pass `padding='longest'` and `return_attention_mask=True`
+        processor = AutoProcessor.from_pretrained("openai/whisper-medium.en")
+        inputs = processor(raw_audio, return_tensors="pt", truncation=False, padding="longest", return_attention_mask=True, sampling_rate=16_000)
+        inputs = inputs.to("cuda", torch.float16)
+        model_medium = WhisperForConditionalGeneration.from_pretrained("openai/whisper-medium.en", torch_dtype=torch.float16)
+        model_medium.to("cuda")
 
-    # activate `temperature_fallback` and repetition detection filters and condition on prev text
-    result = model_medium.generate(**inputs, condition_on_prev_tokens=False, temperature=(0.0, 0.2, 0.4, 0.6, 0.8, 1.0), logprob_threshold=-1.0, compression_ratio_threshold=1.35, return_timestamps=True)
+        # activate `temperature_fallback` and repetition detection filters and condition on prev text
+        result = model_medium.generate(**inputs, condition_on_prev_tokens=False, temperature=(0.0, 0.2, 0.4, 0.6, 0.8, 1.0), logprob_threshold=-1.0, compression_ratio_threshold=1.35, return_timestamps=True)
 
-    transcript = processor.batch_decode(result, skip_special_tokens=True)
+        transcript = processor.batch_decode(result, skip_special_tokens=True)
     print(transcript)
     response = {'status'    : 0,
                 'transcript': transcript}
