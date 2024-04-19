@@ -95,21 +95,29 @@ function App() {
         }
         else if (model === "Whisper") {
             if (inputMode === 'file') { // pass a file
-                const filenames = Array.from(files).map(f => f.name);
-                    setFilenames(filenames)
-                    // axios.get('/whisper-transcribe-files-batched/', {params:{'folder':inputDataFolder, 'filenames':JSON.stringify(filenames)}})
-                    // .then((response) => {handleBackendResponse(response)})
-                    // .catch((error) => {handleNetworkErrors(error)})
-                    const formData = new FormData();
-                    for (let i=0; i<files.length; i++) {
-                        formData.append(files[i].name, files[i]);
+                const fns = Array.from(files).map(f => f.name);
+                const filenames = fns.filter((fn) => fn.endsWith(".wav") || fn.endsWith(".mp3") || fn.endsWith(".m4a"))
+                setFilenames(filenames)
+                // axios.get('/whisper-transcribe-files-batched/', {params:{'folder':inputDataFolder, 'filenames':JSON.stringify(filenames)}})
+                // .then((response) => {handleBackendResponse(response)})
+                // .catch((error) => {handleNetworkErrors(error)})
+                const formData = new FormData();
+                for (let i=0; i<files.length; i++) {
+                    const fileName = files[i].name;
+                    if (fileName.endsWith(".mp3") || fileName.endsWith(".wav") || fileName.endsWith(".m4a")) {
+                        formData.append(fileName, files[i]);
+                    }
+                    else {
+                        console.log("Error")
                     }
 
-                    axios.post('/transcribe/', formData, {
-                        headers: { 'Content-Type': 'multipart/form-data' }
-                    }).then((response) => { handleBackendResponse(response)})
-                    .catch((error) => {handleNetworkErrors(error)})
-                } 
+                }
+
+                axios.post('/transcribe/', formData, {
+                    headers: { 'Content-Type': 'multipart/form-data' }
+                }).then((response) => { handleBackendResponse(response)})
+                .catch((error) => {handleNetworkErrors(error)})
+            } 
             else if (inputMode === 'folder') { // pass a folder
                 axios.get('/whisper-transcribe-folder', {params:{'folder':inputDataFolder}})
                 .then((response) => { handleBackendResponse(response)})
