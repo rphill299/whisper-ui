@@ -9,8 +9,7 @@ function App() {
  
 //   [ this_is_the_variable, this_is_the_setter ]
 
-    const [file, setFile] = useState() //stores return value of file selector
-    const [files, setFiles] = useState([])
+    const [files, setFiles] = useState([]) //stores return value of file selector
     const [model, setModel] = useState('Whisper'); //stores model in use
     const [outputHeader, setOutputHeader] = useState(); // gives output details
     const [output, setOutput] = useState() //store the transcription output
@@ -37,8 +36,8 @@ function App() {
         setInputDataFolder(event.target.value)
     }
 
-    function handleChangeFile(event) {
-        setFile(event.target.files)
+    function handleChangeFiles(event) {
+        setFiles(event.target.files)
     }
     
     function handleAddFiles(event) {
@@ -48,7 +47,6 @@ function App() {
             console.log(event.target.files[i].name)
         }
         setFiles(newFiles)
-        setFile('9')
     }
 
     function handleChangeModel(event) {
@@ -73,14 +71,14 @@ function App() {
        ==========================================
     */
     function handleTranscribeButtonClick() {
-        if (!file) {
+        if (!files || files.length === 0) {
             alert("You must select a file to transcribe.")
             return
         }
 
-        setOutputHeader('Transcribing ' + files.length + ' file' + (files.length===1 ? '' : 's') + ' using ' + model + ':')
-        setOutput("")
-        console.log(files.length)
+        setOutputHeader("")
+        setFilenames([])
+        setTranscripts([])
 
         if (model === "Wav2Vec2") {
             const formData = new FormData();
@@ -98,6 +96,7 @@ function App() {
                 const fns = Array.from(files).map(f => f.name);
                 const filenames = fns.filter((fn) => fn.endsWith(".wav") || fn.endsWith(".mp3") || fn.endsWith(".m4a"))
                 setFilenames(filenames)
+                setOutputHeader('Transcribing ' + filenames.length + ' file' + (filenames.length===1 ? '' : 's') + ' using ' + model + ':')
                 // axios.get('/whisper-transcribe-files-batched/', {params:{'folder':inputDataFolder, 'filenames':JSON.stringify(filenames)}})
                 // .then((response) => {handleBackendResponse(response)})
                 // .catch((error) => {handleNetworkErrors(error)})
@@ -171,8 +170,8 @@ function App() {
                 <Inputs 
                     inputDataFolder={inputDataFolder}
                     handleChangeInputDataFolder={handleChangeInputDataFolder}
-                    handleChangeFile={handleChangeFile} 
-                    handleAddFiles={handleAddFiles}
+                    handleChangeFiles={handleChangeFiles} 
+                    // handleChangeFiles={handleAddFiles}
                     handleChangeModel={handleChangeModel}
                     handleTranscribeButtonClick={handleTranscribeButtonClick}
                     modelInUse={model}
@@ -196,7 +195,7 @@ function App() {
     );
 }
 
-function Inputs({inputDataFolder, handleChangeInputDataFolder, handleChangeFile, handleAddFiles, modelInUse, handleChangeModel, handleTranscribeButtonClick,
+function Inputs({inputDataFolder, handleChangeInputDataFolder, handleChangeFiles, modelInUse, handleChangeModel, handleTranscribeButtonClick,
     inputMode, handleChangeInputMode, optionsVisible, handleOptionsButtonClick}) {
 
     function ModelRadioButton({model}) {
@@ -226,16 +225,16 @@ function Inputs({inputDataFolder, handleChangeInputDataFolder, handleChangeFile,
                 <InputModeRadioButton mode="folder" label={"I have a folder"}></InputModeRadioButton>
             </div>
             <div>
-                <input type='file' multiple directory={(inputMode==='folder')&&""} webkitdirectory={(inputMode==='folder')&&""} defaultValue={inputDataFolder} onChange={handleAddFiles}/>
+                <input type='file' multiple directory={(inputMode==='folder')&&""} webkitdirectory={(inputMode==='folder')&&""} defaultValue={inputDataFolder} onChange={handleChangeFiles}/>
             </div>
             <div>
                 <button onClick={handleOptionsButtonClick}>{(optionsVisible ? "Hide " : "") + "Options"}</button>
                 {optionsVisible && (
                     <div>
-                        <div>
+                        {/* <div>
                             <label>Input Folder: </label>
                             <input type='text' defaultValue={inputDataFolder} onChange={handleChangeInputDataFolder} disabled={modelInUse === "Wav2Vec2"}/> 
-                        </div>
+                        </div> */}
                         <div>  
                             <label>Model: </label> 
                             <ModelRadioButton model='Whisper'></ModelRadioButton>
@@ -273,12 +272,3 @@ function Outputs({outputHeader, tabIndex, handleChangeTab, transcripts, filename
 }
 
 export default App;
-
-
-
-{/* <Paper square>
-<Tabs value={tabIndex} onChange={(event, newIndex) => {handleChangeTab(newIndex)}}>
-    {tabsArray}
-</Tabs>
-<p>{transcripts[tabIndex]}</p>
-</Paper> */}
