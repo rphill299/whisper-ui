@@ -144,10 +144,12 @@ def wav2vec2_transcribe():
                 'transcript':'4'}
     return response
 
-#saves transcripts[i] under filepaths[i]
-#expects outputfolder to be a prefix of each filepath
-def saveTextOutputs(outputFolder, filepaths, transcripts) :
-    for idx, fp in enumerate(filepaths):
+# saves transcripts[i] with filename outputFolder+filenames[i]
+# outputFolder: String - full path to output folder
+# filenames: [String] - array of filenames (including extensions)
+# transcripts: [String] - array of transcripts 
+def saveTextOutputs(outputFolder, filenames, transcripts) :
+    for idx, fp in enumerate(filenames):
         current_datetime = datetime.now().strftime("%Y-%m-%d-%H-%M-%S")
         transcripts_id = str(current_datetime)
         fp = join(transcripts_id, fp)
