@@ -110,7 +110,6 @@ def transcribe():
             audio = read_file(_file)
             transcript.append(model.transcribe(audio)['text'])
             file_path = splitext(file_path)[0]+'_output.txt'
-            print(file_path, file=PRINT_TO_CONSOLE)
             filepaths.append(file_path)
     else:
         raw_audio = [read_file(_file) for _file in request.files.values()]
@@ -128,7 +127,8 @@ def transcribe():
     #print(transcript)
     response = {'status'    : 0,
                 'transcript': transcript}
-    saveTextOutputs(join(CURR_DIR, "outputs"), filepaths, transcript)
+    if request.args.get('saveOutputs') == 'true' :
+        saveTextOutputs(request.args.get('outputFolder'), filepaths, transcript)
     return response
 
 @app.route('/wav2vec2-transcribe/', methods = ['POST'])

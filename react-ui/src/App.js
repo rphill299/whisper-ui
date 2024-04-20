@@ -85,7 +85,8 @@ function App() {
             }
 
             axios.post('/transcribe/', formData, {
-                headers: { 'Content-Type': 'multipart/form-data' }
+                headers: { 'Content-Type': 'multipart/form-data' },
+                params: {'saveOutputs': saveOutputs, "outputFolder": outputFolder}
             }).then((response) => { handleBackendResponse(response)})
             .catch((error) => {handleNetworkErrors(error)})
         }
