@@ -32,8 +32,7 @@ model = whisper.load_model("base")
 def init():
     print("received initial request", file=PRINT_TO_CONSOLE)
     outputDir = join(CURR_DIR, "outputs")
-    response = {'inputFolder'   : CURR_DIR, 
-                'outputFolder'  : outputDir} 
+    response = { 'outputFolder' : outputDir } 
     return response
 
 

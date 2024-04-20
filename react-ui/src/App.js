@@ -15,7 +15,6 @@ function App() {
 
     const [files, setFiles] = useState([]) //stores return value of file selector
     const [outputHeader, setOutputHeader] = useState(); // gives output details
-    const [inputDataFolder, setInputDataFolder] = useState()
     const [outputFolder, setOutputFolder] = useState()
     const [tabIndex, setTabIndex] = useState(0);
     const [transcripts, setTranscripts] = useState([])
@@ -28,11 +27,9 @@ function App() {
 
     /* Simple communication with backend here 
         obtaining default data folder from backend on app  init*/
-    if (!inputDataFolder) {
+    if (!outputFolder) {
         axios.get('/init/').then((response) => {
             const data = response.data
-            const defaultDataFolder = data.inputFolder
-            setInputDataFolder(defaultDataFolder)
             const defaultOutputFolder = data.outputFolder
             setOutputFolder(defaultOutputFolder)
         }).catch((error) => {handleNetworkErrors(error)})
@@ -127,10 +124,6 @@ function App() {
         console.log(error.config);
     }
 
-    function handleChangeInputDataFolder(event) {
-        setInputDataFolder(event.target.value)
-    }
-
     function handleChangeOutputFolder(event) {
         setOutputFolder(event.target.value)
     }
@@ -175,8 +168,6 @@ function App() {
             </div>
             <div>
                 <Inputs 
-                    inputDataFolder={inputDataFolder}
-                    handleChangeInputDataFolder={handleChangeInputDataFolder}
                     handleChangeFiles={handleChangeFiles} 
                     // handleChangeFiles={handleAddFiles}
                     handleChangeModel={handleChangeModel}
@@ -206,7 +197,7 @@ function App() {
     );
 }
 
-function Inputs({inputDataFolder, handleChangeInputDataFolder, handleChangeFiles, modelInUse, handleChangeModel, handleTranscribeButtonClick, 
+function Inputs({handleChangeFiles, modelInUse, handleChangeModel, handleTranscribeButtonClick, 
     inputMode, handleChangeInputMode, optionsVisible, handleOptionsButtonClick, saveOutputs, handleChangeSaveOutputs, outputFolder, handleChangeOutputFolder}) {
 
     function ModelRadioButton({model}) {
@@ -236,16 +227,12 @@ function Inputs({inputDataFolder, handleChangeInputDataFolder, handleChangeFiles
                 <InputModeRadioButton mode="folder" label={"I have a folder"}></InputModeRadioButton>
             </div>
             <div>
-                <input type='file' multiple directory={(inputMode==='folder')&&""} webkitdirectory={(inputMode==='folder')&&""} defaultValue={inputDataFolder} onChange={handleChangeFiles}/>
+                <input type='file' multiple directory={(inputMode==='folder')&&""} webkitdirectory={(inputMode==='folder')&&""} onChange={handleChangeFiles}/>
             </div>
             <div>
                 <button onClick={handleOptionsButtonClick}>{(optionsVisible ? "Hide " : "") + "Options"}</button>
                 {optionsVisible && (
                     <div>
-                        {/* <div>
-                            <label>Input Folder: </label>
-                            <input type='text' defaultValue={inputDataFolder} onChange={handleChangeInputDataFolder} disabled={modelInUse === "Wav2Vec2"}/> 
-                        </div> */}
                         <div>
                             <label>
                                 <input type='checkbox' checked={saveOutputs} onChange={handleChangeSaveOutputs}/>
