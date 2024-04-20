@@ -149,13 +149,12 @@ def wav2vec2_transcribe():
 # filenames: [String] - array of filenames (including extensions)
 # transcripts: [String] - array of transcripts 
 def saveTextOutputs(outputFolder, filenames, transcripts) :
-    for idx, fp in enumerate(filenames):
-        current_datetime = datetime.now().strftime("%Y-%m-%d-%H-%M-%S")
-        transcripts_id = str(current_datetime)
-        fp = join(transcripts_id, fp)
-        fp = join(outputFolder, fp)
-        file_path = split(fp)[0]
-        makedirs(file_path, exist_ok=True)
+    current_datetime = datetime.now().strftime("%Y-%m-%d-%H-%M-%S")
+    transcripts_id = str(current_datetime)
+    folder = join(outputFolder, transcripts_id)
+    makedirs(folder)
+    for idx, fn in enumerate(filenames):
+        fp = join(folder, fn)
         file = open(fp, 'w+') #open file in write mode
         file.write(transcripts[idx])
         file.close()
