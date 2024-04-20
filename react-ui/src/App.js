@@ -75,8 +75,14 @@ function App() {
             const formData = new FormData();
             for (let i=0; i<files.length; i++) {
                 const fileName = files[i].name;
+                const fileRelPath = files[i].webkitRelativePath
                 if (fileName.endsWith(".mp3") || fileName.endsWith(".wav") || fileName.endsWith(".m4a")) {
-                    formData.append(fileName, files[i]);
+                    if (fileRelPath === '') {
+                        formData.append(fileName, files[i]);
+                    }
+                    else {
+                        formData.append(fileRelPath, files[i])
+                    }
                 }
                 else {
                     console.log("Error")
