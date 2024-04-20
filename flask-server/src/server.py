@@ -3,8 +3,8 @@ from flask_cors import CORS, cross_origin
 import sys
 from wav2vec2 import run
 from utils import read_file
-import os
-import os.path
+from os import getcwd, chdir, makedirs
+from os.path import expanduser, join, splitext, split
 import whisper
 import torchaudio
 from transformers import WhisperForConditionalGeneration, AutoProcessor
@@ -12,15 +12,16 @@ from datasets import load_dataset, Audio
 import numpy as np
 import torch
 import json
+from datetime import datetime
 
 app = Flask(__name__)
 cors = CORS(app)
 app.config['CORS_HEADERS'] = 'Content-Type' #this line may or may not be unnecessary
 
 PRINT_TO_CONSOLE = sys.stderr #print to this file within endpoints to print to console
-HOME_DIR = os.path.expanduser("~") #user's home directory
-os.chdir(os.path.join("..", ".."))
-CURR_DIR = os.getcwd() #project directory
+HOME_DIR = expanduser("~") #user's home directory
+chdir(join("..", ".."))
+CURR_DIR = getcwd() #project directory
 PROJ_DIR = CURR_DIR
 
 model = whisper.load_model("base")
@@ -31,7 +32,7 @@ model = whisper.load_model("base")
 @cross_origin()
 def init():
     print("received initial request", file=PRINT_TO_CONSOLE)
-    outputDir = os.path.join(CURR_DIR, "outputs")
+    outputDir = join(CURR_DIR, "outputs")
     response = {'inputFolder'   : CURR_DIR,
                 'outputFolder'  : outputDir} 
     return response
@@ -43,7 +44,7 @@ def init():
 def whisper_transcribe_file():
     inputFilename = request.args.get("filename")
     inputFolder = request.args.get("folder")
-    inputFilePath = os.path.join(inputFolder, inputFilename)
+    inputFilePath = join(inputFolder, inputFilename)
     print("received whisper transcribe request for " + inputFilename, file=PRINT_TO_CONSOLE)
 
     transcript = model.transcribe(inputFilePath)
@@ -64,7 +65,7 @@ def whisper_transcribe_file_batched():
     else:
         filenames = []
     inputFolder = request.args.get("folder")
-    inputFilePaths = [os.path.join(inputFolder, inputFilename) for inputFilename in filenames]
+    inputFilePaths = [join(inputFolder, inputFilename) for inputFilename in filenames]
 
     # if no GPU, sequential transcribe
     if not torch.cuda.is_available() : 
@@ -75,7 +76,7 @@ def whisper_transcribe_file_batched():
         # check if saving outputs and save to folder 
         if request.args.get('saveOutputs') :
             of = request.args.get('outputFolder')
-            saveTextOutputs(of, [os.path.join(of, f.split('.')[0]+"_output.txt") for f in filenames], transcripts)
+            saveTextOutputs(of, [join(of, f.split('.')[0]+"_output.txt") for f in filenames], transcripts)
     
         return {'status': 0, 'transcript':transcripts}
 
@@ -109,7 +110,7 @@ def transcribe():
         for file_path, _file in request.files.items():
             audio = read_file(_file)
             transcript.append(model.transcribe(audio)['text'])
-            file_path = os.path.splitext(file_path)[0]+'_output.txt'
+            file_path = splitext(file_path)[0]+'_output.txt'
             print(file_path, file=PRINT_TO_CONSOLE)
             filepaths.append(file_path)
     else:
@@ -128,7 +129,7 @@ def transcribe():
     #print(transcript)
     response = {'status'    : 0,
                 'transcript': transcript}
-    saveTextOutputs(os.path.join(CURR_DIR, "outputs"), filepaths, transcript)
+    saveTextOutputs(join(CURR_DIR, "outputs"), filepaths, transcript)
     return response
 
 @app.route('/wav2vec2-transcribe/', methods = ['POST'])
@@ -147,9 +148,12 @@ def wav2vec2_transcribe():
 #expects outputfolder to be a prefix of each filepath
 def saveTextOutputs(outputFolder, filepaths, transcripts) :
     for idx, fp in enumerate(filepaths):
-        fp = os.path.join(outputFolder, fp)
-        file_path = os.path.split(fp)[0]
-        os.makedirs(file_path, exist_ok=True)
+        current_datetime = datetime.now().strftime("%Y-%m-%d-%H-%M-%S")
+        transcripts_id = str(current_datetime)
+        fp = join(transcripts_id, fp)
+        fp = join(outputFolder, fp)
+        file_path = split(fp)[0]
+        makedirs(file_path, exist_ok=True)
         file = open(fp, 'w+') #open file in write mode
         file.write(transcripts[idx])
         file.close()
