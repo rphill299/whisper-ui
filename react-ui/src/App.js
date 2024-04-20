@@ -49,6 +49,7 @@ function App() {
         setOutputHeader("")
         setFilenames([])
         setTranscripts([])
+        setTabIndex(0)
 
         if (model === "Wav2Vec2") {
             const formData = new FormData();
