@@ -66,9 +66,6 @@ function App() {
             const filenames = fns.filter((fn) => fn.endsWith(".wav") || fn.endsWith(".mp3") || fn.endsWith(".m4a"))
             setFilenames(filenames)
             setOutputHeader('Transcribing ' + filenames.length + ' file' + (filenames.length===1 ? '' : 's') + ' using ' + model + ':')
-            // axios.get('/whisper-transcribe-files-batched/', {params:{'folder':inputDataFolder, 'filenames':JSON.stringify(filenames)}})
-            // .then((response) => {handleBackendResponse(response)})
-            // .catch((error) => {handleNetworkErrors(error)})
             const formData = new FormData();
             for (let i=0; i<files.length; i++) {
                 const fileName = files[i].name;
