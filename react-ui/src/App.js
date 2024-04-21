@@ -15,8 +15,8 @@ function App() {
 
     const [files, setFiles] = useState([]) //stores return value of file selector
     const [outputHeader, setOutputHeader] = useState(); // gives output details
-    const [outputFolder, setOutputFolder] = useState()
-    const [tabIndex, setTabIndex] = useState(0);
+    const [outputFolder, setOutputFolder] = useState("Refresh once backend starts up")
+    const [tabIndex, setTabIndex] = useState(0)
     const [transcripts, setTranscripts] = useState([])
 
     const [filenames, setFilenames] = useState([])
