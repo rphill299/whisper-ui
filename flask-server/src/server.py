@@ -151,6 +151,10 @@ def saveTextOutputs(outputFolder, filenames, transcripts) :
     current_datetime = datetime.now().strftime("%Y-%m-%d-%H-%M-%S")
     transcripts_id = str(current_datetime)
     folder = join(outputFolder, transcripts_id)
+    if split(filenames[0])[0] :
+        folder = join(folder, split(filenames[0])[0])
+        for idx, fn in enumerate(filenames) :
+            filenames[idx] = split(fn)[1]
     makedirs(folder)
     for idx, fn in enumerate(filenames):
         fp = join(folder, fn)
