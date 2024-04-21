@@ -105,17 +105,19 @@ def transcribe():
     print("received batched whisper transcribe request", file=PRINT_TO_CONSOLE)
     filepaths = []
     transcripts = []
+    _files = []
     #populate filepaths for cpu and gpu
-    for fp, _ in request.files.items() :
+    for fp, _file in request.files.items() :
         file_path = splitext(fp)[0]+'_output.txt'
         filepaths.append(file_path)
+        _files.append(_file)
 
     if not torch.cuda.is_available() : #cpu
-        for _, _file in request.files.items() : 
+        for _file in _files :
             audio = read_file(_file)
             transcripts.append(model.transcribe(audio)['text'])
     else: #gpu
-        raw_audio = [read_file(_file) for _file in request.files.values()]
+        raw_audio = [read_file(_file) for _file in _files]
         # process input, make sure to pass `padding='longest'` and `return_attention_mask=True`
         processor = AutoProcessor.from_pretrained("openai/whisper-medium.en")
         inputs = processor(raw_audio, return_tensors="pt", truncation=False, padding="longest", return_attention_mask=True, sampling_rate=16_000)
@@ -154,7 +156,7 @@ def saveTextOutputs(outputFolder, filepaths, transcripts) :
     transcripts_id = str(current_datetime)
     for idx, fn in enumerate(filepaths):
         path, filename = split(fn)
-        filepath = join(outputFolder, path, transcripts_id)
+        filepath = join(outputFolder, transcripts_id, path)
         makedirs(filepath, exist_ok=True)
         file = open(join(filepath, filename), 'w+') #open file in write mode
         file.write(transcripts[idx])
