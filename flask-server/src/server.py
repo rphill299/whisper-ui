@@ -152,7 +152,7 @@ def saveTextOutputs(outputFolder, filenames, transcripts) :
     transcripts_id = str(current_datetime)
     folder = join(outputFolder, transcripts_id)
     if split(filenames[0])[0] :
-        folder = join(folder, split(filenames[0])[0])
+        folder = join(outputFolder, split(filenames[0])[0], transcripts_id)
         for idx, fn in enumerate(filenames) :
             filenames[idx] = split(fn)[1]
     makedirs(folder)
