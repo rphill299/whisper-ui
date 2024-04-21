@@ -103,15 +103,18 @@ def whisper_transcribe_file_batched():
 @cross_origin()
 def transcribe():
     print("received batched whisper transcribe request", file=PRINT_TO_CONSOLE)
-    if not torch.cuda.is_available():
-        transcript = []
-        filepaths = []
-        for file_path, _file in request.files.items():
+    filepaths = []
+    transcripts = []
+    #populate filepaths for cpu and gpu
+    for fp, _ in request.files.items() :
+        file_path = splitext(fp)[0]+'_output.txt'
+        filepaths.append(file_path)
+
+    if not torch.cuda.is_available() : #cpu
+        for _, _file in request.files.items() : 
             audio = read_file(_file)
-            transcript.append(model.transcribe(audio)['text'])
-            file_path = splitext(file_path)[0]+'_output.txt'
-            filepaths.append(file_path)
-    else:
+            transcripts.append(model.transcribe(audio)['text'])
+    else: #gpu
         raw_audio = [read_file(_file) for _file in request.files.values()]
         # process input, make sure to pass `padding='longest'` and `return_attention_mask=True`
         processor = AutoProcessor.from_pretrained("openai/whisper-medium.en")
@@ -123,12 +126,11 @@ def transcribe():
         # activate `temperature_fallback` and repetition detection filters and condition on prev text
         result = model_medium.generate(**inputs, condition_on_prev_tokens=False, temperature=(0.0, 0.2, 0.4, 0.6, 0.8, 1.0), logprob_threshold=-1.0, compression_ratio_threshold=1.35, return_timestamps=True)
 
-        transcript = processor.batch_decode(result, skip_special_tokens=True)
-    #print(transcript)
+        transcripts = processor.batch_decode(result, skip_special_tokens=True)
     response = {'status'    : 0,
-                'transcript': transcript}
+                'transcript': transcripts}
     if request.args.get('saveOutputs') == 'true' :
-        saveTextOutputs(request.args.get('outputFolder'), filepaths, transcript)
+        saveTextOutputs(request.args.get('outputFolder'), filepaths, transcripts)
     return response
 
 @app.route('/wav2vec2-transcribe/', methods = ['POST'])
@@ -143,16 +145,16 @@ def wav2vec2_transcribe():
                 'transcript':'4'}
     return response
 
-# saves transcripts[i] with filename outputFolder+filenames[i]
+# saves transcripts[i] with filename outputFolder+filepaths[i]
 # outputFolder: String - full path to output folder
-# filenames: [String] - array of filenames (including extensions) (could include folder(s) prefix)
+# filepaths: [String] - array of filepaths (including extensions)
 # transcripts: [String] - array of transcripts 
-def saveTextOutputs(outputFolder, filenames, transcripts) :
+def saveTextOutputs(outputFolder, filepaths, transcripts) :
     current_datetime = datetime.now().strftime("%Y-%m-%d-%H-%M-%S")
     transcripts_id = str(current_datetime)
-    for idx, fn in enumerate(filenames):
-        filepath, filename = split(fn)
-        filepath = join(outputFolder, filepath, transcripts_id)
+    for idx, fn in enumerate(filepaths):
+        path, filename = split(fn)
+        filepath = join(outputFolder, path, transcripts_id)
         makedirs(filepath, exist_ok=True)
         file = open(join(filepath, filename), 'w+') #open file in write mode
         file.write(transcripts[idx])

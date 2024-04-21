@@ -27,7 +27,7 @@ function App() {
 
     /* Simple communication with backend here 
         obtaining default data folder from backend on app  init*/
-    if (!outputFolder) {
+    if (outputFolder === "Refresh once backend starts up") {
         axios.get('/init/').then((response) => {
             const data = response.data
             const defaultOutputFolder = data.outputFolder
