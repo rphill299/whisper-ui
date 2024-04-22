@@ -3,8 +3,8 @@ from flask_cors import CORS, cross_origin
 import sys
 from wav2vec2 import run
 from utils import read_file
-from os.path import expanduser, join, splitext, exists
-from os import getcwd, chdir, mkdir
+from os import getcwd, chdir, makedirs
+from os.path import expanduser, join, splitext, split
 import whisper
 import torchaudio
 from transformers import WhisperForConditionalGeneration, AutoProcessor
@@ -12,6 +12,7 @@ from datasets import load_dataset, Audio
 import numpy as np
 import torch
 import json
+from datetime import datetime
 
 app = Flask(__name__)
 cors = CORS(app)
@@ -102,15 +103,21 @@ def whisper_transcribe_file_batched():
 @cross_origin()
 def transcribe():
     print("received batched whisper transcribe request", file=PRINT_TO_CONSOLE)
-    if not torch.cuda.is_available():
-        transcript = []
-        for _file in request.files.values():
-            #print("Im here")
+    filepaths = []
+    transcripts = []
+    _files = []
+    #populate filepaths for cpu and gpu
+    for fp, _file in request.files.items() :
+        file_path = splitext(fp)[0]+'_output.txt'
+        filepaths.append(file_path)
+        _files.append(_file)
+
+    if not torch.cuda.is_available() : #cpu
+        for _file in _files :
             audio = read_file(_file)
-            transcript.append(model.transcribe(audio)['text'])
-            #print(transcript)
-    else:
-        raw_audio = [read_file(_file) for _file in request.files.values()]
+            transcripts.append(model.transcribe(audio)['text'])
+    else: #gpu
+        raw_audio = [read_file(_file) for _file in _files]
         # process input, make sure to pass `padding='longest'` and `return_attention_mask=True`
         processor = AutoProcessor.from_pretrained("openai/whisper-medium.en")
         inputs = processor(raw_audio, return_tensors="pt", truncation=False, padding="longest", return_attention_mask=True, sampling_rate=16_000)
@@ -121,10 +128,11 @@ def transcribe():
         # activate `temperature_fallback` and repetition detection filters and condition on prev text
         result = model_medium.generate(**inputs, condition_on_prev_tokens=False, temperature=(0.0, 0.2, 0.4, 0.6, 0.8, 1.0), logprob_threshold=-1.0, compression_ratio_threshold=1.35, return_timestamps=True)
 
-        transcript = processor.batch_decode(result, skip_special_tokens=True)
-    print(transcript)
+        transcripts = processor.batch_decode(result, skip_special_tokens=True)
     response = {'status'    : 0,
-                'transcript': transcript}
+                'transcript': transcripts}
+    if request.args.get('saveOutputs') == 'true' :
+        saveTextOutputs(request.args.get('outputFolder'), filepaths, transcripts)
     return response
 
 @app.route('/wav2vec2-transcribe/', methods = ['POST'])
@@ -139,13 +147,17 @@ def wav2vec2_transcribe():
                 'transcript':'4'}
     return response
 
-#saves transcripts[i] under filepaths[i]
-#expects outputfolder to be a prefix of each filepath
+# saves transcripts[i] with filename outputFolder+filepaths[i]
+# outputFolder: String - full path to output folder
+# filepaths: [String] - array of filepaths (including extensions)
+# transcripts: [String] - array of transcripts 
 def saveTextOutputs(outputFolder, filepaths, transcripts) :
-    if not exists(outputFolder) :
-        #create outputfolder if not exists
-        mkdir(outputFolder)
-    for idx, fp in enumerate(filepaths):
-        file = open(fp, 'w+') #open file in write mode
+    current_datetime = datetime.now().strftime("%Y-%m-%d-%H-%M-%S")
+    transcripts_id = str(current_datetime)
+    for idx, fn in enumerate(filepaths):
+        path, filename = split(fn)
+        filepath = join(outputFolder, transcripts_id, path)
+        makedirs(filepath, exist_ok=True)
+        file = open(join(filepath, filename), 'w+') #open file in write mode
         file.write(transcripts[idx])
         file.close()

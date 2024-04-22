@@ -15,8 +15,8 @@ function App() {
 
     const [files, setFiles] = useState([]) //stores return value of file selector
     const [outputHeader, setOutputHeader] = useState(); // gives output details
-    const [outputFolder, setOutputFolder] = useState()
-    const [tabIndex, setTabIndex] = useState(0);
+    const [outputFolder, setOutputFolder] = useState("Refresh once backend starts up")
+    const [tabIndex, setTabIndex] = useState(0)
     const [transcripts, setTranscripts] = useState([])
 
     const [filenames, setFilenames] = useState([])
@@ -27,7 +27,7 @@ function App() {
 
     /* Simple communication with backend here 
         obtaining default data folder from backend on app  init*/
-    if (!outputFolder) {
+    if (outputFolder === "Refresh once backend starts up") {
         axios.get('/init/').then((response) => {
             const data = response.data
             const defaultOutputFolder = data.outputFolder
@@ -49,6 +49,7 @@ function App() {
         setOutputHeader("")
         setFilenames([])
         setTranscripts([])
+        setTabIndex(0)
 
         if (model === "Wav2Vec2") {
             const formData = new FormData();
@@ -66,14 +67,17 @@ function App() {
             const filenames = fns.filter((fn) => fn.endsWith(".wav") || fn.endsWith(".mp3") || fn.endsWith(".m4a"))
             setFilenames(filenames)
             setOutputHeader('Transcribing ' + filenames.length + ' file' + (filenames.length===1 ? '' : 's') + ' using ' + model + ':')
-            // axios.get('/whisper-transcribe-files-batched/', {params:{'folder':inputDataFolder, 'filenames':JSON.stringify(filenames)}})
-            // .then((response) => {handleBackendResponse(response)})
-            // .catch((error) => {handleNetworkErrors(error)})
             const formData = new FormData();
             for (let i=0; i<files.length; i++) {
                 const fileName = files[i].name;
+                const fileRelPath = files[i].webkitRelativePath
                 if (fileName.endsWith(".mp3") || fileName.endsWith(".wav") || fileName.endsWith(".m4a")) {
-                    formData.append(fileName, files[i]);
+                    if (fileRelPath === '') {
+                        formData.append(fileName, files[i]);
+                    }
+                    else {
+                        formData.append(fileRelPath, files[i])
+                    }
                 }
                 else {
                     console.log("Error")
@@ -82,7 +86,8 @@ function App() {
             }
 
             axios.post('/transcribe/', formData, {
-                headers: { 'Content-Type': 'multipart/form-data' }
+                headers: { 'Content-Type': 'multipart/form-data' },
+                params: {'saveOutputs': saveOutputs, "outputFolder": outputFolder}
             }).then((response) => { handleBackendResponse(response)})
             .catch((error) => {handleNetworkErrors(error)})
         }
@@ -99,6 +104,7 @@ function App() {
         }
     }
 
+    // text with newlines doesn't render properly in HTML; use this to put each newline into an html paragraph.
     function NewlineText(text) {
         const newText = text.split('\n').map(str => <p>{str}</p>)
 
@@ -167,7 +173,7 @@ function App() {
                 <h1>Transcription Tool</h1>
             </div>
             <div>
-                <Inputs 
+                <Inputs
                     handleChangeFiles={handleChangeFiles} 
                     // handleChangeFiles={handleAddFiles}
                     handleChangeModel={handleChangeModel}

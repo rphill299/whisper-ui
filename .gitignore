@@ -10,3 +10,6 @@ venv
 
 #ignore python bytecode
 __pycache__
+
+#ignore outputs
+outputs
