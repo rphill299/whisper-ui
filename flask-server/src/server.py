@@ -2,7 +2,7 @@ from flask import Flask, request, jsonify
 from flask_cors import CORS, cross_origin
 import sys
 from wav2vec2 import run
-from utils import read_file
+from utils import loadAudio, saveTextOutputs, prepFiles
 from os import getcwd, chdir, makedirs
 from os.path import expanduser, join, splitext, split
 import whisper
@@ -103,21 +103,17 @@ def whisper_transcribe_file_batched():
 @cross_origin()
 def transcribe():
     print("received batched whisper transcribe request", file=PRINT_TO_CONSOLE)
-    filepaths = []
-    transcripts = []
-    _files = []
-    #populate filepaths for cpu and gpu
-    for fp, _file in request.files.items() :
-        file_path = splitext(fp)[0]+'_output.txt'
-        filepaths.append(file_path)
-        _files.append(_file)
+    
+    # prepares the files for transcription
+    filepaths, _files = prepFiles(request)
 
+    transcripts = []
     if not torch.cuda.is_available() : #cpu
         for _file in _files :
-            audio = read_file(_file)
+            audio = loadAudio(_file)
             transcripts.append(model.transcribe(audio)['text'])
     else: #gpu
-        raw_audio = [read_file(_file) for _file in _files]
+        raw_audio = [loadAudio(_file) for _file in _files]
         # process input, make sure to pass `padding='longest'` and `return_attention_mask=True`
         processor = AutoProcessor.from_pretrained("openai/whisper-medium.en")
         inputs = processor(raw_audio, return_tensors="pt", truncation=False, padding="longest", return_attention_mask=True, sampling_rate=16_000)
@@ -140,24 +136,9 @@ def transcribe():
 def wav2vec2_transcribe():
     for _file in request.files.values():
         print("received wav2vec2 transcribe request for " + _file.filename, file=PRINT_TO_CONSOLE)
-        audio = read_file(_file)
+        audio = loadAudio(_file)
         transcript = model.transcribe(audio)
         print(transcript['text'], file=PRINT_TO_CONSOLE)
     response = {'status'    : 0,
                 'transcript':'4'}
     return response
-
-# saves transcripts[i] with filename outputFolder+filepaths[i]
-# outputFolder: String - full path to output folder
-# filepaths: [String] - array of filepaths (including extensions)
-# transcripts: [String] - array of transcripts 
-def saveTextOutputs(outputFolder, filepaths, transcripts) :
-    current_datetime = datetime.now().strftime("%Y-%m-%d-%H-%M-%S")
-    transcripts_id = str(current_datetime)
-    for idx, fn in enumerate(filepaths):
-        path, filename = split(fn)
-        filepath = join(outputFolder, transcripts_id, path)
-        makedirs(filepath, exist_ok=True)
-        file = open(join(filepath, filename), 'w+') #open file in write mode
-        file.write(transcripts[idx])
-        file.close()
