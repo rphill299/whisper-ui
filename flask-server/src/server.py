@@ -1,18 +1,14 @@
-from flask import Flask, request, jsonify
+from flask import Flask, request
 from flask_cors import CORS, cross_origin
 import sys
-from wav2vec2 import run
 from utils import loadAudio, saveTextOutputs, prepFiles
-from os import getcwd, chdir, makedirs
-from os.path import expanduser, join, splitext, split
+from os import getcwd, chdir
+from os.path import expanduser, join
 import whisper
 import torchaudio
 from transformers import WhisperForConditionalGeneration, AutoProcessor
-from datasets import load_dataset, Audio
 import numpy as np
 import torch
-import json
-from datetime import datetime
 
 app = Flask(__name__)
 cors = CORS(app)
