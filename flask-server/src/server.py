@@ -19,6 +19,7 @@ HOME_DIR = expanduser("~") #user's home directory
 chdir(join("..", ".."))
 CURR_DIR = getcwd() #project directory
 PROJ_DIR = CURR_DIR
+DEFAULT_OUTPUT_DIR = join("outputs","")
 
 model = whisper.load_model("base")
 
@@ -28,8 +29,7 @@ model = whisper.load_model("base")
 @cross_origin()
 def init():
     print("received initial request", file=PRINT_TO_CONSOLE)
-    outputDir = join(CURR_DIR, "outputs")
-    response = { 'outputFolder' : outputDir } 
+    response = { 'outputFolder' : DEFAULT_OUTPUT_DIR } 
     return response
     
 @app.route('/transcribe/', methods = ['POST'])
