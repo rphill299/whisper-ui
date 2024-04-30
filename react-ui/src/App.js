@@ -24,6 +24,7 @@ function App() {
     const [inputMode, setInputMode] = useState('file') // determine file vs. folder select
     const [optionsVisible, setOptionsVisible] = useState(false) // toggle options
     const [saveOutputs, setSaveOutputs] = useState(false) // toggle whether outputs are auto-saved or not
+    const [showLoadingSpinner, setShowLoadingSpinner] = useState(false)
 
     /* Simple communication with backend here 
         obtaining default data folder from backend on app  init*/
@@ -50,6 +51,7 @@ function App() {
         setFilenames([])
         setTranscripts([])
         setTabIndex(0)
+        setShowLoadingSpinner(true)
 
         if (model === "Wav2Vec2") {
             const formData = new FormData();
@@ -90,6 +92,7 @@ function App() {
                 params: {'saveOutputs': saveOutputs, "outputFolder": outputFolder}
             }).then((response) => { handleBackendResponse(response)})
             .catch((error) => {handleNetworkErrors(error)})
+            .finally(() => {setShowLoadingSpinner(false)})
         }
     }
 
@@ -102,13 +105,6 @@ function App() {
         } else {
             alert(status);
         }
-    }
-
-    // text with newlines doesn't render properly in HTML; use this to put each newline into an html paragraph.
-    function NewlineText(text) {
-        const newText = text.split('\n').map(str => <p>{str}</p>)
-
-        return newText
     }
 
     function handleNetworkErrors(error) {
@@ -196,7 +192,8 @@ function App() {
                     tabIndex={tabIndex} 
                     handleChangeTab={handleChangeTab}
                     transcripts={transcripts}
-                    filenames={filenames}> 
+                    filenames={filenames}
+                    showLoadingSpinner={showLoadingSpinner}> 
                 </Outputs>
             </div>
         </div>
@@ -265,7 +262,7 @@ function Inputs({handleChangeFiles, modelInUse, handleChangeModel, handleTranscr
     );
 }
 
-function Outputs({outputHeader, tabIndex, handleChangeTab, transcripts, filenames}) {
+function Outputs({outputHeader, tabIndex, handleChangeTab, transcripts, filenames, showLoadingSpinner}) {
     const tabsArray = []
     for (let i = 0; i < filenames.length; i++) {
         tabsArray.push(<Tab value={i} label={filenames[i]}/>)
@@ -280,8 +277,16 @@ function Outputs({outputHeader, tabIndex, handleChangeTab, transcripts, filename
                 <Tabs value={tabIndex} onChange={(event, newIndex) => {handleChangeTab(newIndex)}}>
                     {tabsArray}
                 </Tabs>
-                <p>{transcripts[tabIndex]}</p>
+                {showLoadingSpinner && (<div class="loader"></div>)}
+                {transcripts[tabIndex] && NewlineText(transcripts[tabIndex])}
             </Paper> 
         </div>
     );
+
+     // text with newlines doesn't render properly in HTML; use this to put each newline into an html paragraph.
+    function NewlineText(text) {
+        const newText = text.split('\n').map(str => <p>{str}</p>)
+
+        return newText
+    }
 }
