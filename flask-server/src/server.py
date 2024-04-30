@@ -39,12 +39,16 @@ def transcribe():
     
     # prepares the files for transcription
     filepaths, _files = prepFiles(request)
-
     transcripts = []
+    languages = []
+
     if not torch.cuda.is_available() : #cpu
         for _file in _files :
             audio = loadAudio(_file)
-            transcripts.append(model.transcribe(audio)['text'])
+            ret = model.transcribe(audio)
+            transcripts.append(ret['text'])
+            languages.append(ret['language'])
+
     else: #gpu
         raw_audio = [loadAudio(_file) for _file in _files]
         # process input, make sure to pass `padding='longest'` and `return_attention_mask=True`
@@ -59,7 +63,8 @@ def transcribe():
 
         transcripts = processor.batch_decode(result, skip_special_tokens=True)
     response = {'status'    : 0,
-                'transcript': transcripts}
+                'transcript': transcripts,
+                'languages'  : languages}
     if request.args.get('saveOutputs') == 'true' :
         saveTextOutputs(request.args.get('outputFolder'), filepaths, transcripts)
     return response

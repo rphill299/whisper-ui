@@ -28,6 +28,7 @@ function App() {
     const [processingMode, setProcessingMode] = useState("Batched") // Either 'Batched' or 'Sequential'
     const [useDiarization, setUseDiarization] = useState(false)
     const [useTranslation, setUseTranslation] = useState(false)
+    const [languages, setLanguages] = useState([])
 
     /* Simple communication with backend here 
         obtaining default data folder from backend on app  init*/
@@ -40,7 +41,6 @@ function App() {
     }
   
     /* ==========================================
-
         Handling communication with backend here
        ==========================================
     */
@@ -55,6 +55,7 @@ function App() {
         setTranscripts([])
         setTabIndex(0)
         setShowLoadingSpinner(true)
+        setLanguages([])
 
         if (model === "Wav2Vec2") {
             const formData = new FormData();
@@ -105,6 +106,7 @@ function App() {
         const status = data.status;
         if (status === 0) {
             setTranscripts(data.transcript)
+            setLanguages(data.languages)
         } else {
             alert(status);
         }
@@ -213,6 +215,7 @@ function App() {
                     tabIndex={tabIndex} 
                     handleChangeTab={handleChangeTab}
                     transcripts={transcripts}
+                    languages={languages}
                     filenames={filenames}
                     showLoadingSpinner={showLoadingSpinner}> 
                 </Outputs>
@@ -309,7 +312,7 @@ function Inputs({handleChangeFiles, modelInUse, handleChangeModel, handleTranscr
     );
 }
 
-function Outputs({outputHeader, tabIndex, handleChangeTab, transcripts, filenames, showLoadingSpinner}) {
+function Outputs({outputHeader, tabIndex, handleChangeTab, transcripts, languages, filenames, showLoadingSpinner}) {
     const tabsArray = []
     for (let i = 0; i < filenames.length; i++) {
         tabsArray.push(<Tab value={i} label={filenames[i]}/>)
@@ -326,6 +329,7 @@ function Outputs({outputHeader, tabIndex, handleChangeTab, transcripts, filename
                 </Tabs>
                 {showLoadingSpinner && (<div class="loader"></div>)}
                 {transcripts[tabIndex] && NewlineText(transcripts[tabIndex])}
+                {languages[tabIndex] && (<p>Language Detected: {languages[tabIndex]}</p>)}
             </Paper> 
         </div>
     );
