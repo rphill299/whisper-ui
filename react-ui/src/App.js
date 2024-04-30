@@ -21,10 +21,13 @@ function App() {
 
     const [filenames, setFilenames] = useState([])
     const [model, setModel] = useState('Whisper'); //stores model in use
-    const [inputMode, setInputMode] = useState('file') // determine file vs. folder select
+    const [inputMode, setInputMode] = useState('file') // determine 'file' vs. 'folder' select
     const [optionsVisible, setOptionsVisible] = useState(false) // toggle options
     const [saveOutputs, setSaveOutputs] = useState(false) // toggle whether outputs are auto-saved or not
     const [showLoadingSpinner, setShowLoadingSpinner] = useState(false)
+    const [processingMode, setProcessingMode] = useState("Batched") // Either 'Batched' or 'Sequential'
+    const [useDiarization, setUseDiarization] = useState(false)
+    const [useTranslation, setUseTranslation] = useState(false)
 
     /* Simple communication with backend here 
         obtaining default data folder from backend on app  init*/
@@ -163,6 +166,18 @@ function App() {
         setSaveOutputs(!saveOutputs)
     }
 
+    function handleChangeProcessingMode(event) {
+        setProcessingMode(event.target.value)
+    }
+
+    function handleChangeUseDiarization(event) {
+        setUseDiarization(event.target.checked)
+    }
+
+    function handleChangeUseTranslation(event) {
+        setUseTranslation(event.target.checked)
+    }
+
     return (
         <div className='App'>
             <div>
@@ -183,6 +198,12 @@ function App() {
                     handleChangeSaveOutputs={handleChangeSaveOutputs}
                     outputFolder={outputFolder}
                     handleChangeOutputFolder={handleChangeOutputFolder}
+                    processingMode={processingMode}
+                    handleChangeProcessingMode={handleChangeProcessingMode}
+                    useDiarization={useDiarization}
+                    handleChangeUseDiarization={handleChangeUseDiarization}
+                    useTranslation={useTranslation}
+                    handleChangeUseTranslation={handleChangeUseTranslation}
                     >
                 </Inputs>      
             </div>
@@ -201,7 +222,8 @@ function App() {
 }
 
 function Inputs({handleChangeFiles, modelInUse, handleChangeModel, handleTranscribeButtonClick, 
-    inputMode, handleChangeInputMode, optionsVisible, handleOptionsButtonClick, saveOutputs, handleChangeSaveOutputs, outputFolder, handleChangeOutputFolder}) {
+    inputMode, handleChangeInputMode, optionsVisible, handleOptionsButtonClick, saveOutputs, handleChangeSaveOutputs, outputFolder, handleChangeOutputFolder,
+    processingMode, handleChangeProcessingMode, useDiarization, handleChangeUseDiarization, useTranslation, handleChangeUseTranslation}) {
 
     function ModelRadioButton({model}) {
         return (
@@ -223,6 +245,15 @@ function Inputs({handleChangeFiles, modelInUse, handleChangeModel, handleTranscr
         );
     }
 
+    function ProcessingModeRadioButton({mode}) {
+        return (
+            <>
+                <input id={mode} type='radio' name='processing' value={mode} checked={mode === processingMode} onChange={handleChangeProcessingMode}/>
+                <label for={mode}>{mode}</label>
+            </>
+        )
+    }
+
     return (
         <fieldset>
             <div>
@@ -236,7 +267,28 @@ function Inputs({handleChangeFiles, modelInUse, handleChangeModel, handleTranscr
                 <button onClick={handleOptionsButtonClick}>{(optionsVisible ? "Hide " : "") + "Options"}</button>
                 {optionsVisible && (
                     <div>
+                        <div> 
+                            <label>Processing Mode:</label>
+                            <ProcessingModeRadioButton mode="Batched"></ProcessingModeRadioButton>
+                            <ProcessingModeRadioButton mode="Sequential"></ProcessingModeRadioButton>
+                        </div>
+                        <div>  
+                            <label>Model: </label> 
+                            <ModelRadioButton model='Whisper'></ModelRadioButton>
+                            <ModelRadioButton model='Wav2Vec2'></ModelRadioButton> 
+                        </div>
                         <div>
+                            Additional Functionality:
+                        </div>
+                        <div>
+                            <label>
+                                <input type='checkbox' checked={useDiarization} onChange={handleChangeUseDiarization}/>
+                                Diarization
+                            </label>
+                            <label>
+                                <input type='checkbox' checked={useTranslation} onChange={handleChangeUseTranslation}/>
+                                Translation
+                            </label>
                             <label>
                                 <input type='checkbox' checked={saveOutputs} onChange={handleChangeSaveOutputs}/>
                                 Save all output
@@ -246,11 +298,6 @@ function Inputs({handleChangeFiles, modelInUse, handleChangeModel, handleTranscr
                                 <label>Output Folder: </label>
                                 <input type='text' defaultValue={outputFolder} onChange={handleChangeOutputFolder}/>
                             </div>)}
-                        </div>
-                        <div>  
-                            <label>Model: </label> 
-                            <ModelRadioButton model='Whisper'></ModelRadioButton>
-                            <ModelRadioButton model='Wav2Vec2'></ModelRadioButton> 
                         </div>
                     </div>
                 )}
