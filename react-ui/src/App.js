@@ -60,18 +60,7 @@ function App() {
         setLanguages([])
         setEnableTranscribe(false)
 
-        if (model === "Wav2Vec2") {
-            const formData = new FormData();
-            for (let i=0; i<files.length; i++) {
-                formData.append(files[i].name, files[i]);
-            }
-
-            axios.post('/transcribe/', formData, {
-                headers: { 'Content-Type': 'multipart/form-data' }
-            }).then((response) => { handleBackendResponse(response)})
-            .catch((error) => {handleNetworkErrors(error)})
-        }
-        else if (model === "Whisper") {
+        if (model === 'Whisper') {
             const fns = Array.from(files).map(f => f.name);
             const filenames = fns.filter((fn) => fn.endsWith(".wav") || fn.endsWith(".mp3") || fn.endsWith(".m4a")) // TODO: add all file extns whisper supports 
             setFilenames(filenames)
@@ -293,11 +282,10 @@ function Inputs({enableTranscribe, handleChangeFiles, modelInUse, handleChangeMo
                             <ProcessingModeRadioButton mode="Batched" disabled={useDiarization||useTranslation}></ProcessingModeRadioButton>
                             <ProcessingModeRadioButton mode="Sequential" disabled={useDiarization||useTranslation}></ProcessingModeRadioButton>
                         </div>
-                        <div>  
+                        {/* <div>  
                             <label>Model: </label> 
                             <ModelRadioButton model='Whisper'></ModelRadioButton>
-                            <ModelRadioButton model='Wav2Vec2'></ModelRadioButton> 
-                        </div>
+                        </div> */}
                         <div>
                             Additional Functionality:
                         </div>
