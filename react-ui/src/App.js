@@ -30,6 +30,7 @@ function App() {
     const [useDiarization, setUseDiarization] = useState(false)
     const [useTranslation, setUseTranslation] = useState(false)
     const [languages, setLanguages] = useState([])
+    const [enableTranscribe, setEnableTranscribe] = useState(true)
 
     /* Simple communication with backend here 
         obtaining default data folder from backend on app  init*/
@@ -57,6 +58,7 @@ function App() {
         setTabIndex(0)
         setShowLoadingSpinner(true)
         setLanguages([])
+        setEnableTranscribe(false)
 
         if (model === "Wav2Vec2") {
             const formData = new FormData();
@@ -93,7 +95,7 @@ function App() {
                 params: {'saveOutputs': saveOutputs, "outputFolder": outputFolder}
             }).then((response) => { handleBackendResponse(response)})
             .catch((error) => {handleNetworkErrors(error)})
-            .finally(() => {setShowLoadingSpinner(false)})
+            .finally(() => {setShowLoadingSpinner(false); setEnableTranscribe(true)})
         }
     }
 
@@ -198,6 +200,7 @@ function App() {
             </div>
             <div>
                 <Inputs
+                    enableTranscribe={enableTranscribe}
                     handleChangeFiles={handleChangeFiles} 
                     // handleChangeFiles={handleAddFiles}
                     handleChangeModel={handleChangeModel}
@@ -235,7 +238,7 @@ function App() {
     );
 }
 
-function Inputs({handleChangeFiles, modelInUse, handleChangeModel, handleTranscribeButtonClick, 
+function Inputs({enableTranscribe, handleChangeFiles, modelInUse, handleChangeModel, handleTranscribeButtonClick, 
     inputMode, handleChangeInputMode, optionsVisible, handleOptionsButtonClick, saveOutputs, handleChangeSaveOutputs, outputFolder, handleChangeOutputFolder,
     processingMode, handleChangeProcessingMode, useDiarization, handleChangeUseDiarization, useTranslation, handleChangeUseTranslation}) {
 
@@ -321,7 +324,7 @@ function Inputs({handleChangeFiles, modelInUse, handleChangeModel, handleTranscr
                 )}
             </div>
             <div>
-                <button type='submit' onClick={handleTranscribeButtonClick} size="lg">Transcribe</button>
+                <button type='submit' onClick={handleTranscribeButtonClick} size="lg" disabled={!enableTranscribe}>Transcribe</button>
             </div>
         </fieldset>
     );
