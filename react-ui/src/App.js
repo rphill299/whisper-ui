@@ -32,6 +32,7 @@ function App() {
     const [languages, setLanguages] = useState([])
     const [enableTranscribe, setEnableTranscribe] = useState(true)
 
+
     /* Simple communication with backend here 
         obtaining default data folder from backend on app  init*/
     if (outputFolder === "Refresh once backend starts up") {
@@ -61,14 +62,16 @@ function App() {
         setEnableTranscribe(false)
 
         if (model === 'Whisper') {
-            const fns = Array.from(files).map(f => f.name);
-            const filenames = fns.filter((fn) => fn.endsWith(".wav") || fn.endsWith(".mp3") || fn.endsWith(".m4a")) // TODO: add all file extns whisper supports 
-            setFilenames(filenames)
-            setOutputHeader('Transcribing ' + filenames.length + ' file' + (filenames.length===1 ? '' : 's') + ' using ' + model + ':')
+            // get filenames from user selection
+            const allFilenames = Array.from(files).map(f => f.name);
+            // filter out audio filenames
+            const audioFilenames = allFilenames.filter((fn) => isAudioFilename(fn))
+            setFilenames(audioFilenames)
+            setOutputHeader('Transcribing ' + audioFilenames.length + ' file' + (audioFilenames.length===1 ? '' : 's') + ' using ' + model + ':')
             const formData = new FormData();
             for (let i=0; i<files.length; i++) {
-                const fileName = fns[i];
-                if (fileName.endsWith(".mp3") || fileName.endsWith(".wav") || fileName.endsWith(".m4a")) {
+                const fileName = allFilenames[i];
+                if (isAudioFilename(fileName)) {
                     const fileRelPath = files[i].webkitRelativePath
                     if (fileRelPath === '') { // means user passed files only
                         formData.append(fileName, files[i]);
@@ -79,6 +82,7 @@ function App() {
                     console.log("skipping " + fileName)
                 }
             }
+
             axios.post('/transcribe/', formData, {
                 headers: { 'Content-Type': 'multipart/form-data' },
                 params: {'saveOutputs': saveOutputs, "outputFolder": outputFolder}
@@ -117,6 +121,15 @@ function App() {
         console.log('Error', error.message);
         }
         console.log(error.config);
+    }
+
+    function isAudioFilename(filename) {
+        // return true if the file format is compatible for librosa.load() and whisper.transcribe()/whisper.translate()
+        // LIBROSA INCOMPATIBLE TYPES: .m4a, 
+        filename = filename.toLowerCase()
+        return  (filename.endsWith(".wav") ||
+            filename.endsWith(".mp3") 
+            )
     }
 
     function handleChangeOutputFolder(event) {
