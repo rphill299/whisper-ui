@@ -73,28 +73,37 @@ function App() {
             const audioFilenames = allFilenames.filter((fn) => isAudioFilename(fn))
             setFilenames(audioFilenames)
             setOutputHeader('Transcribing ' + audioFilenames.length + ' file' + (audioFilenames.length===1 ? '' : 's') + ' using ' + model + ':')
-            const formData = new FormData();
-            for (let i=0; i<files.length; i++) {
-                const fileName = allFilenames[i];
-                if (isAudioFilename(fileName)) {
-                    const fileRelPath = files[i].webkitRelativePath
-                    if (fileRelPath === '') { // means user passed files only
-                        formData.append(fileName, files[i]);
-                    } else { // means user passed a folder 
-                        formData.append(fileRelPath, files[i])
-                    }
-                } else {
-                    console.log("skipping " + fileName)
-                }
-            }
-
-            axios.post('/transcribe/', formData, {
-                headers: { 'Content-Type': 'multipart/form-data' },
-                params: {'saveOutputs': saveOutputs, "outputFolder": outputFolder}
-            }).then((response) => { handleBackendResponse(response)})
+            // create form data storing raw files to pass to backend
+            const formData = createFormData(allFilenames)
+            // send form data, along with params and proper headers, to backend, and handle response
+            axios.post('/transcribe/', 
+                formData, 
+                { headers: { 'Content-Type': 'multipart/form-data' },
+                    params: {'saveOutputs': saveOutputs, "outputFolder": outputFolder}
+                })
+            .then((response) => { handleBackendResponse(response)})
             .catch((error) => {handleNetworkErrors(error)})
             .finally(() => {setShowLoadingSpinner(false); setEnableTranscribe(true)})
         }
+    }
+
+    // creates a new formdata object with raw (audio only) files
+    function createFormData(allFilenames) {
+        const formData = new FormData()
+        for (let i=0; i<files.length; i++) {
+            const fileName = allFilenames[i];
+            if (isAudioFilename(fileName)) {
+                const fileRelPath = files[i].webkitRelativePath
+                if (fileRelPath === '') { // means user passed files only
+                    formData.append(fileName, files[i]);
+                } else { // means user passed a folder 
+                    formData.append(fileRelPath, files[i])
+                }
+            } else {
+                console.log("skipping " + fileName)
+            }
+        }
+        return formData
     }
 
     function handleBackendResponse(response) {
