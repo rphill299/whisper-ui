@@ -335,7 +335,7 @@ function Outputs({outputHeader, tabIndex, handleChangeTab, transcripts, language
                 </Tabs>
                 {(showLoadingSpinner && !transcripts[tabIndex]) && (<div class="loader"></div>)}
                 {transcripts[tabIndex] && NewlineText(transcripts[tabIndex])}
-                {!(!languages[tabIndex] || languages[tabIndex]==='n/a') && (<p>Language Detected: {languages[tabIndex]}</p>)}
+                {languages[tabIndex] && (<p>Language Detected: {languages[tabIndex]}</p>)}
             </Paper> 
         </div>
     );

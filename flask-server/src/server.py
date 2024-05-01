@@ -62,9 +62,12 @@ def transcribe():
         result = model_medium.generate(**inputs, condition_on_prev_tokens=False, temperature=(0.0, 0.2, 0.4, 0.6, 0.8, 1.0), logprob_threshold=-1.0, compression_ratio_threshold=1.35, return_timestamps=True)
 
         transcripts = processor.batch_decode(result, skip_special_tokens=True)
+
     response = {'status'    : 0,
                 'transcript': transcripts,
                 'languages'  : languages}
+
     if request.args.get('saveOutputs') == 'true' :
         saveTextOutputs(request.args.get('outputFolder'), filepaths, transcripts)
+        
     return response
