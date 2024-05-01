@@ -71,27 +71,23 @@ function App() {
         }
         else if (model === "Whisper") {
             const fns = Array.from(files).map(f => f.name);
-            const filenames = fns.filter((fn) => fn.endsWith(".wav") || fn.endsWith(".mp3") || fn.endsWith(".m4a"))
+            const filenames = fns.filter((fn) => fn.endsWith(".wav") || fn.endsWith(".mp3") || fn.endsWith(".m4a")) // TODO: add all file extns whisper supports 
             setFilenames(filenames)
             setOutputHeader('Transcribing ' + filenames.length + ' file' + (filenames.length===1 ? '' : 's') + ' using ' + model + ':')
             const formData = new FormData();
             for (let i=0; i<files.length; i++) {
-                const fileName = files[i].name;
-                const fileRelPath = files[i].webkitRelativePath
+                const fileName = fns[i];
                 if (fileName.endsWith(".mp3") || fileName.endsWith(".wav") || fileName.endsWith(".m4a")) {
-                    if (fileRelPath === '') {
+                    const fileRelPath = files[i].webkitRelativePath
+                    if (fileRelPath === '') { // means user passed files only
                         formData.append(fileName, files[i]);
-                    }
-                    else {
+                    } else { // means user passed a folder 
                         formData.append(fileRelPath, files[i])
                     }
+                } else {
+                    console.log("skipping " + fileName)
                 }
-                else {
-                    console.log("Error")
-                }
-
             }
-
             axios.post('/transcribe/', formData, {
                 headers: { 'Content-Type': 'multipart/form-data' },
                 params: {'saveOutputs': saveOutputs, "outputFolder": outputFolder}
@@ -103,7 +99,7 @@ function App() {
 
     function handleBackendResponse(response) {
         const data = response.data;
-        console.log(data)
+        console.log("Backend Response:", data)
         const status = data.status;
         if (status === 0) {
             setTranscripts(data.transcript)
@@ -144,7 +140,7 @@ function App() {
         var newFiles = [...files]
         for (let i=0; i<event.target.files.length; i++){
             newFiles = [...newFiles, event.target.files[i]]
-            console.log(event.target.files[i].name)
+            //console.log(event.target.files[i].name)
         }
         setFiles(newFiles)
     }
