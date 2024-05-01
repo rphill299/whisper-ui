@@ -345,9 +345,9 @@ function Outputs({outputHeader, tabIndex, handleChangeTab, transcripts, language
                 <Tabs value={tabIndex} onChange={(event, newIndex) => {handleChangeTab(newIndex)}}>
                     {tabsArray}
                 </Tabs>
-                {showLoadingSpinner && (<div class="loader"></div>)}
+                {(showLoadingSpinner && !transcripts[tabIndex]) && (<div class="loader"></div>)}
                 {transcripts[tabIndex] && NewlineText(transcripts[tabIndex])}
-                {languages[tabIndex] && (<p>Language Detected: {languages[tabIndex]}</p>)}
+                {!(languages[tabIndex]==='n/a') && (<p>Language Detected: {languages[tabIndex]}</p>)}
             </Paper> 
         </div>
     );
