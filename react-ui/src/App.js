@@ -37,10 +37,13 @@ function App() {
         obtaining default data folder from backend on app  init*/
     if (outputFolder === "Refresh once backend starts up") {
         axios.get('/init/').then((response) => {
-            const data = response.data
+            // get data
+            const data = response.data 
+            // get a value from data ( stored as { 'outputFolder' : value } )
             const defaultOutputFolder = data.outputFolder
+            // do what we want with fetched value
             setOutputFolder(defaultOutputFolder)
-        }).catch((error) => {handleNetworkErrors(error)})
+        }).catch((error) => {handleNetworkErrors(error)}) // catch and report any network errors
     }
   
     /* ==========================================
@@ -48,11 +51,13 @@ function App() {
        ==========================================
     */
     function handleTranscribeButtonClick() {
-        if (!files || files.length === 0) {
+        // don't accept transcribe calls without inputs
+        if (!files || files.length === 0) { 
             alert("You must select a file to transcribe.")
             return
         }
 
+        // prep UI for processing request
         setOutputHeader("")
         setFilenames([])
         setTranscripts([])
