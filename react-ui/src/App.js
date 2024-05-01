@@ -26,6 +26,7 @@ function App() {
     const [saveOutputs, setSaveOutputs] = useState(false) // toggle whether outputs are auto-saved or not
     const [showLoadingSpinner, setShowLoadingSpinner] = useState(false)
     const [processingMode, setProcessingMode] = useState("Batched") // Either 'Batched' or 'Sequential'
+    const [prevProcessing, setprevProcessing] = useState("") // tracks previous processing mode for consistency
     const [useDiarization, setUseDiarization] = useState(false)
     const [useTranslation, setUseTranslation] = useState(false)
     const [languages, setLanguages] = useState([])
@@ -174,10 +175,24 @@ function App() {
 
     function handleChangeUseDiarization(event) {
         setUseDiarization(event.target.checked)
+        handleTranslationDiarizationBatchedSequentialLogic(event.target.checked, useTranslation)
     }
 
     function handleChangeUseTranslation(event) {
         setUseTranslation(event.target.checked)
+        handleTranslationDiarizationBatchedSequentialLogic(event.target.checked, useDiarization)
+    }
+
+    function handleTranslationDiarizationBatchedSequentialLogic(checked, useOther) {
+        if (checked || useOther) {
+            if (prevProcessing === "") {
+                setprevProcessing(processingMode)
+                setProcessingMode('Sequential')
+            }
+        } else {
+            setProcessingMode(prevProcessing)
+            setprevProcessing("")
+        }
     }
 
     return (
@@ -248,10 +263,14 @@ function Inputs({handleChangeFiles, modelInUse, handleChangeModel, handleTranscr
         );
     }
 
-    function ProcessingModeRadioButton({mode}) {
+    function ProcessingModeRadioButton({mode, disabled}) {
         return (
             <>
-                <input id={mode} type='radio' name='processing' value={mode} checked={mode === processingMode} onChange={handleChangeProcessingMode}/>
+                <input id={mode} type='radio' name='processing' value={mode}  
+                    disabled={disabled}
+                    checked={mode === processingMode} 
+                    onChange={handleChangeProcessingMode}
+                    />
                 <label for={mode}>{mode}</label>
             </>
         )
@@ -272,8 +291,8 @@ function Inputs({handleChangeFiles, modelInUse, handleChangeModel, handleTranscr
                     <div>
                         <div> 
                             <label>Processing Mode:</label>
-                            <ProcessingModeRadioButton mode="Batched"></ProcessingModeRadioButton>
-                            <ProcessingModeRadioButton mode="Sequential"></ProcessingModeRadioButton>
+                            <ProcessingModeRadioButton mode="Batched" disabled={useDiarization||useTranslation}></ProcessingModeRadioButton>
+                            <ProcessingModeRadioButton mode="Sequential" disabled={useDiarization||useTranslation}></ProcessingModeRadioButton>
                         </div>
                         <div>  
                             <label>Model: </label> 
