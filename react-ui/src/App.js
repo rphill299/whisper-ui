@@ -78,9 +78,7 @@ function App() {
                 batchedBackendTranscribeCall(audioFiles, audioFilenames)
             } 
             else if (processingMode === 'Sequential') {
-                audioFiles.forEach(function(file, idx) {
-                    sequentialTranscribeCall(file, audioFilenames[idx], idx)
-                })
+                sequentialTranscribeCall(audioFiles, audioFilenames, 0)
             }
         }
     }
@@ -101,7 +99,7 @@ function App() {
 
     function handleBatchedBackendResponse(response) {
         const data = response.data;
-        console.log("Backend Response:", data)
+        console.log("Batched Backend Response:", data)
         const status = data.status;
         if (status === 0) {
             setTranscripts(data.transcript)
@@ -111,9 +109,11 @@ function App() {
         }
     }
 
-    function sequentialTranscribeCall(audioFile, audioFilename, idx) {
+    function sequentialTranscribeCall(audioFiles, audioFilenames, idx) {
+        console.log(audioFiles[idx], audioFilenames[idx])
         // create form data storing raw files to pass to backend
-        const formData = createFormData([audioFile], [audioFilename])
+        let formData = createFormData([audioFiles[idx]], [audioFilenames[idx]])
+        console.log(formData)
         // send form data, along with params and proper headers, to backend, and handle response
         axios.post('/transcribe/', 
             formData, 
@@ -122,16 +122,27 @@ function App() {
             })
         .then((response) => { handleSequentialBackendResponse(response)})
         .catch((error) => {handleNetworkErrors(error)})
-        .finally(() => {if (idx === files.length) {endOfProcessing()}})
+        .finally(() => {
+            if (idx === audioFiles.length-1) {
+                endOfProcessing()
+            } else {
+                
+                sequentialTranscribeCall(audioFiles, audioFilenames, idx+1)
+            }
+        })
     }
 
     function handleSequentialBackendResponse(response) {
         const data = response.data;
-        console.log("Backend Response:", data)
+        console.log("Sequential Backend Response:", data)
         const status = data.status;
         if (status === 0) {
-            const new_trans = transcripts.append(data.transcript[0])
-            const new_langs = languages.append(data.languages[0])
+            const new_trans = structuredClone(transcripts)
+            const new_langs = structuredClone(languages)
+            console.log("Updating", new_trans)
+            new_trans.push(data.transcript[0])
+            console.log("to", new_trans)
+            new_langs.push(data.languages[0])
             setTranscripts(new_trans)
             setLanguages(new_langs)
         } else {
