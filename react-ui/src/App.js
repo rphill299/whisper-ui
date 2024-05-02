@@ -4,21 +4,17 @@ import Paper from "@material-ui/core/Paper";
 import Tab from "@material-ui/core/Tab";
 import Tabs from "@material-ui/core/Tabs";
 import axios from 'axios'
-
 // this is the default return value of App.js
 export default App;
-
 // this defines App
 function App() {
     // go to the return statement at the bottom of this function to see what an "App" is 
     // [ this_is_the_variable, this_is_the_setter ]
-
     const [files, setFiles] = useState([]) //stores return value of file selector
     const [outputHeader, setOutputHeader] = useState(); // gives output details
     const [outputFolder, setOutputFolder] = useState("Refresh once backend starts up")
     const [tabIndex, setTabIndex] = useState(0)
     const [transcripts, setTranscripts] = useState([])
-
     const [filenames, setFilenames] = useState([])
     const [model, setModel] = useState('Whisper'); //stores model in use
     const [inputMode, setInputMode] = useState('file') // determine 'file' vs. 'folder' select
@@ -31,8 +27,6 @@ function App() {
     const [useTranslation, setUseTranslation] = useState(false)
     const [languages, setLanguages] = useState([])
     const [enableTranscribe, setEnableTranscribe] = useState(true)
-
-
     /* Simple communication with backend here 
         obtaining default data folder from backend on app  init*/
     if (outputFolder === "Refresh once backend starts up") {
@@ -56,7 +50,6 @@ function App() {
             alert("You must select a file to transcribe.")
             return
         }
-
         // prep UI for processing request
         setOutputHeader("")
         setFilenames([])
@@ -66,27 +59,29 @@ function App() {
         setLanguages([])
         setEnableTranscribe(false)
 
-        // get audio files and filenames from user selection
-        const audioFiles = [...files].filter((f) => isAudioFilename(f.name)) // filter out non-audio files
-        const audioFilenames = audioFiles.map((f) => f.name) // get filtered filenames
-        // set files and filenames and output header 
-        setFiles(audioFiles)
+        // get filenames from user selection
+        const allFilenames = Array.from(files).map((f) => f.name);
+        // filter out audio filenames
+        const audioFilenames = allFilenames.filter((fn) => isAudioFilename(fn))
+        const audioFiles = Array.from(files).filter((f) => isAudioFilename(f.name))
+        // set filenames and output header
         setFilenames(audioFilenames)
+        setFiles(audioFiles)
         setOutputHeader('Transcribing ' + audioFilenames.length + ' file' + (audioFilenames.length===1 ? '' : 's') + ' using ' + model + ':')
 
         if (model === 'Whisper') {
             if (processingMode === 'Batched') {
-                batchedBackendTranscribeCall()
+                backendTranscribeCall(audioFiles, audioFilenames)
             } 
             else if (processingMode === 'Sequential') {
-                
+
             }
         }
     }
 
-    function batchedBackendTranscribeCall() {
+    function backendTranscribeCall(audioFiles, audioFilenames) {
         // create form data storing raw files to pass to backend
-        const formData = createFormData()
+        const formData = createFormData(audioFiles, audioFilenames)
         // send form data, along with params and proper headers, to backend, and handle response
         axios.post('/transcribe/', 
             formData, 
@@ -99,19 +94,18 @@ function App() {
     }
 
     // creates a new formdata object with raw (audio only) files
-    function createFormData() {
+    function createFormData(audioFiles, audioFilenames) {
         const formData = new FormData()
-        for (let i=0; i<files.length; i++) {
+        for (let i=0; i<audioFiles.length; i++) {
             const fileRelPath = files[i].webkitRelativePath
             if (fileRelPath === '') { // means user passed files only
-                formData.append(filenames[i], files[i]);
+                formData.append(audioFilenames[i], files[i]);
             } else { // means user passed a folder 
                 formData.append(fileRelPath, files[i])
             }
         }
         return formData
     }
-
     function handleBackendResponse(response) {
         const data = response.data;
         console.log("Backend Response:", data)
@@ -123,7 +117,6 @@ function App() {
             alert(status);
         }
     }
-
     function handleNetworkErrors(error) {
         if (error.response) {
         // The request was made and the server responded with a status code
@@ -142,7 +135,6 @@ function App() {
         }
         console.log(error.config);
     }
-
     function isAudioFilename(filename) {
         // return true if the file format is compatible for librosa.load() and whisper.transcribe()/whisper.translate()
         // LIBROSA INCOMPATIBLE TYPES: .m4a, 
@@ -151,11 +143,9 @@ function App() {
             filename.endsWith(".mp3") 
             )
     }
-
     function handleChangeOutputFolder(event) {
         setOutputFolder(event.target.value)
     }
-
     function handleChangeFiles(event) {
         setFiles(event.target.files)
     }
@@ -168,41 +158,32 @@ function App() {
         }
         setFiles(newFiles)
     }
-
     function handleChangeModel(event) {
         setModel(event.target.value)
     }
-
     function handleOptionsButtonClick() {
         setOptionsVisible(!optionsVisible)
     }
-
     function handleChangeInputMode(event) {
         setInputMode(event.target.value)
     }
-
     function handleChangeTab(index) {
         setTabIndex(index)
     }
-
     function handleChangeSaveOutputs() {
         setSaveOutputs(!saveOutputs)
     }
-
     function handleChangeProcessingMode(event) {
         setProcessingMode(event.target.value)
     }
-
     function handleChangeUseDiarization(event) {
         setUseDiarization(event.target.checked)
         handleTranslationDiarizationBatchedSequentialLogic(event.target.checked, useTranslation)
     }
-
     function handleChangeUseTranslation(event) {
         setUseTranslation(event.target.checked)
         handleTranslationDiarizationBatchedSequentialLogic(event.target.checked, useDiarization)
     }
-
     function handleTranslationDiarizationBatchedSequentialLogic(checked, useOther) {
         if (checked || useOther) {
             if (prevProcessing === "") {
@@ -214,7 +195,6 @@ function App() {
             setprevProcessing("")
         }
     }
-
     return (
         <div className='App'>
             <div>
@@ -259,11 +239,9 @@ function App() {
         </div>
     );
 }
-
 function Inputs({enableTranscribe, handleChangeFiles, modelInUse, handleChangeModel, handleTranscribeButtonClick, 
     inputMode, handleChangeInputMode, optionsVisible, handleOptionsButtonClick, saveOutputs, handleChangeSaveOutputs, outputFolder, handleChangeOutputFolder,
     processingMode, handleChangeProcessingMode, useDiarization, handleChangeUseDiarization, useTranslation, handleChangeUseTranslation}) {
-
     function ModelRadioButton({model}) {
         return (
             <>
@@ -273,7 +251,6 @@ function Inputs({enableTranscribe, handleChangeFiles, modelInUse, handleChangeMo
             </>
         );
     }
-
     function InputModeRadioButton({mode, label}) {
         return (
             <>
@@ -283,7 +260,6 @@ function Inputs({enableTranscribe, handleChangeFiles, modelInUse, handleChangeMo
             </>
         );
     }
-
     function ProcessingModeRadioButton({mode, disabled}) {
         return (
             <>
@@ -296,7 +272,6 @@ function Inputs({enableTranscribe, handleChangeFiles, modelInUse, handleChangeMo
             </>
         )
     }
-
     return (
         <fieldset>
             <div>
@@ -350,7 +325,6 @@ function Inputs({enableTranscribe, handleChangeFiles, modelInUse, handleChangeMo
         </fieldset>
     );
 }
-
 function Outputs({outputHeader, tabIndex, handleChangeTab, transcripts, languages, filenames, showLoadingSpinner}) {
     const tabsArray = []
     for (let i = 0; i < filenames.length; i++) {
@@ -372,11 +346,9 @@ function Outputs({outputHeader, tabIndex, handleChangeTab, transcripts, language
             </Paper> 
         </div>
     );
-
      // text with newlines doesn't render properly in HTML; use this to put each newline into an html paragraph.
     function NewlineText(text) {
         const newText = text.split('\n').map(str => <p>{str}</p>)
-
         return newText
     }
 }
