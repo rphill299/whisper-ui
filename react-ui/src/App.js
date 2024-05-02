@@ -9,7 +9,6 @@ import axios from 'axios'
 // this is the default return value of App.js
 export default App;
 
-
 // this defines App
 function App() {
     // go to the return statement at the bottom of this function to see what an "App" is 
@@ -31,6 +30,7 @@ function App() {
     const [useTranslation, setUseTranslation] = useState(false)
     const [languages, setLanguages] = useState([])
     const [enableTranscribe, setEnableTranscribe] = useState(true)
+
     /* Simple communication with backend here 
         obtaining default data folder from backend on app  init*/
     if (outputFolder === "Refresh once backend starts up") {
@@ -78,7 +78,9 @@ function App() {
                 batchedBackendTranscribeCall(audioFiles, audioFilenames)
             } 
             else if (processingMode === 'Sequential') {
-                sequentialTranscribeCall(audioFiles, audioFilenames)
+                audioFiles.forEach(function(file, idx) {
+                    sequentialTranscribeCall(file, audioFilenames[idx], idx)
+                })
             }
         }
     }
@@ -109,9 +111,9 @@ function App() {
         }
     }
 
-    function sequentialTranscribeCall(audioFiles, audioFilenames) {
+    function sequentialTranscribeCall(audioFile, audioFilename, idx) {
         // create form data storing raw files to pass to backend
-        const formData = createFormData(audioFiles, audioFilenames)
+        const formData = createFormData([audioFile], [audioFilename])
         // send form data, along with params and proper headers, to backend, and handle response
         axios.post('/transcribe/', 
             formData, 
@@ -128,8 +130,10 @@ function App() {
         console.log("Backend Response:", data)
         const status = data.status;
         if (status === 0) {
-            setTranscripts(data.transcript)
-            setLanguages(data.languages)
+            const new_trans = transcripts.append(data.transcript[0])
+            const new_langs = languages.append(data.languages[0])
+            setTranscripts(new_trans)
+            setLanguages(new_langs)
         } else {
             alert(status);
         }
