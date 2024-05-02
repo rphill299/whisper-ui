@@ -1,10 +1,13 @@
 import io
 import librosa
+import sys
 
 from os import makedirs
 from os.path import join, splitext, split
 
 from datetime import datetime
+
+PRINT_TO_CONSOLE = sys.stderr #print to this file within endpoints to print to console
 
 def loadAudio(file):
     buf = io.BytesIO(file.read())
