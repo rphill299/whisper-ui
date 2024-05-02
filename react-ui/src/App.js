@@ -66,17 +66,17 @@ function App() {
         setLanguages([])
         setEnableTranscribe(false)
 
-        // get filenames from user selection
-        const allFilenames = Array.from(files).map(f => f.name);
-        // filter out audio filenames
-        const audioFilenames = allFilenames.filter((fn) => isAudioFilename(fn))
-        // set filenames and output header 
+        // get audio files and filenames from user selection
+        const audioFiles = [...files].filter((f) => isAudioFilename(f.name)) // filter out non-audio files
+        const audioFilenames = audioFiles.map((f) => f.name) // get filtered filenames
+        // set files and filenames and output header 
+        setFiles(audioFiles)
         setFilenames(audioFilenames)
         setOutputHeader('Transcribing ' + audioFilenames.length + ' file' + (audioFilenames.length===1 ? '' : 's') + ' using ' + model + ':')
 
         if (model === 'Whisper') {
             if (processingMode === 'Batched') {
-                backendTranscribeCall(allFilenames)
+                batchedBackendTranscribeCall()
             } 
             else if (processingMode === 'Sequential') {
                 
@@ -84,9 +84,9 @@ function App() {
         }
     }
 
-    function backendTranscribeCall(allFilenames) {
+    function batchedBackendTranscribeCall() {
         // create form data storing raw files to pass to backend
-        const formData = createFormData(allFilenames)
+        const formData = createFormData()
         // send form data, along with params and proper headers, to backend, and handle response
         axios.post('/transcribe/', 
             formData, 
@@ -99,19 +99,14 @@ function App() {
     }
 
     // creates a new formdata object with raw (audio only) files
-    function createFormData(allFilenames) {
+    function createFormData() {
         const formData = new FormData()
         for (let i=0; i<files.length; i++) {
-            const fileName = allFilenames[i];
-            if (isAudioFilename(fileName)) {
-                const fileRelPath = files[i].webkitRelativePath
-                if (fileRelPath === '') { // means user passed files only
-                    formData.append(fileName, files[i]);
-                } else { // means user passed a folder 
-                    formData.append(fileRelPath, files[i])
-                }
-            } else {
-                console.log("skipping " + fileName)
+            const fileRelPath = files[i].webkitRelativePath
+            if (fileRelPath === '') { // means user passed files only
+                formData.append(filenames[i], files[i]);
+            } else { // means user passed a folder 
+                formData.append(fileRelPath, files[i])
             }
         }
         return formData
