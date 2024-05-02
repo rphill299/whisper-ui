@@ -4,8 +4,12 @@ import Paper from "@material-ui/core/Paper";
 import Tab from "@material-ui/core/Tab";
 import Tabs from "@material-ui/core/Tabs";
 import axios from 'axios'
+
+
 // this is the default return value of App.js
 export default App;
+
+
 // this defines App
 function App() {
     // go to the return statement at the bottom of this function to see what an "App" is 
@@ -71,15 +75,15 @@ function App() {
 
         if (model === 'Whisper') {
             if (processingMode === 'Batched') {
-                backendTranscribeCall(audioFiles, audioFilenames)
+                batchedBackendTranscribeCall(audioFiles, audioFilenames)
             } 
             else if (processingMode === 'Sequential') {
-
+                sequentialTranscribeCall(audioFiles, audioFilenames)
             }
         }
     }
 
-    function backendTranscribeCall(audioFiles, audioFilenames) {
+    function batchedBackendTranscribeCall(audioFiles, audioFilenames) {
         // create form data storing raw files to pass to backend
         const formData = createFormData(audioFiles, audioFilenames)
         // send form data, along with params and proper headers, to backend, and handle response
@@ -88,11 +92,49 @@ function App() {
             { headers: { 'Content-Type': 'multipart/form-data' },
                 params: {'saveOutputs': saveOutputs, "outputFolder": outputFolder}
             })
-        .then((response) => { handleBackendResponse(response)})
+        .then((response) => { handleBatchedBackendResponse(response)})
         .catch((error) => {handleNetworkErrors(error)})
         .finally(() => {setShowLoadingSpinner(false); setEnableTranscribe(true)})
     }
 
+    function handleBatchedBackendResponse(response) {
+        const data = response.data;
+        console.log("Backend Response:", data)
+        const status = data.status;
+        if (status === 0) {
+            setTranscripts(data.transcript)
+            setLanguages(data.languages)
+        } else {
+            alert(status);
+        }
+    }
+
+    function sequentialTranscribeCall(audioFiles, audioFilenames) {
+        // create form data storing raw files to pass to backend
+        const formData = createFormData(audioFiles, audioFilenames)
+        // send form data, along with params and proper headers, to backend, and handle response
+        axios.post('/transcribe/', 
+            formData, 
+            { headers: { 'Content-Type': 'multipart/form-data' },
+                params: {'saveOutputs': saveOutputs, "outputFolder": outputFolder}
+            })
+        .then((response) => { handleSequentialBackendResponse(response)})
+        .catch((error) => {handleNetworkErrors(error)})
+        .finally(() => {setShowLoadingSpinner(false); setEnableTranscribe(true)})
+    }
+
+    function handleSequentialBackendResponse(response) {
+        const data = response.data;
+        console.log("Backend Response:", data)
+        const status = data.status;
+        if (status === 0) {
+            setTranscripts(data.transcript)
+            setLanguages(data.languages)
+        } else {
+            alert(status);
+        }
+    }
+    
     // creates a new formdata object with raw (audio only) files
     function createFormData(audioFiles, audioFilenames) {
         const formData = new FormData()
@@ -106,17 +148,7 @@ function App() {
         }
         return formData
     }
-    function handleBackendResponse(response) {
-        const data = response.data;
-        console.log("Backend Response:", data)
-        const status = data.status;
-        if (status === 0) {
-            setTranscripts(data.transcript)
-            setLanguages(data.languages)
-        } else {
-            alert(status);
-        }
-    }
+
     function handleNetworkErrors(error) {
         if (error.response) {
         // The request was made and the server responded with a status code
@@ -135,6 +167,7 @@ function App() {
         }
         console.log(error.config);
     }
+
     function isAudioFilename(filename) {
         // return true if the file format is compatible for librosa.load() and whisper.transcribe()/whisper.translate()
         // LIBROSA INCOMPATIBLE TYPES: .m4a, 
@@ -143,9 +176,11 @@ function App() {
             filename.endsWith(".mp3") 
             )
     }
+
     function handleChangeOutputFolder(event) {
         setOutputFolder(event.target.value)
     }
+
     function handleChangeFiles(event) {
         setFiles(event.target.files)
     }
@@ -158,32 +193,41 @@ function App() {
         }
         setFiles(newFiles)
     }
+
     function handleChangeModel(event) {
         setModel(event.target.value)
     }
+
     function handleOptionsButtonClick() {
         setOptionsVisible(!optionsVisible)
     }
+
     function handleChangeInputMode(event) {
         setInputMode(event.target.value)
     }
+
     function handleChangeTab(index) {
         setTabIndex(index)
     }
+
     function handleChangeSaveOutputs() {
         setSaveOutputs(!saveOutputs)
     }
+
     function handleChangeProcessingMode(event) {
         setProcessingMode(event.target.value)
     }
+
     function handleChangeUseDiarization(event) {
         setUseDiarization(event.target.checked)
         handleTranslationDiarizationBatchedSequentialLogic(event.target.checked, useTranslation)
     }
+
     function handleChangeUseTranslation(event) {
         setUseTranslation(event.target.checked)
         handleTranslationDiarizationBatchedSequentialLogic(event.target.checked, useDiarization)
     }
+
     function handleTranslationDiarizationBatchedSequentialLogic(checked, useOther) {
         if (checked || useOther) {
             if (prevProcessing === "") {
@@ -195,6 +239,7 @@ function App() {
             setprevProcessing("")
         }
     }
+
     return (
         <div className='App'>
             <div>
@@ -239,9 +284,11 @@ function App() {
         </div>
     );
 }
+
 function Inputs({enableTranscribe, handleChangeFiles, modelInUse, handleChangeModel, handleTranscribeButtonClick, 
     inputMode, handleChangeInputMode, optionsVisible, handleOptionsButtonClick, saveOutputs, handleChangeSaveOutputs, outputFolder, handleChangeOutputFolder,
     processingMode, handleChangeProcessingMode, useDiarization, handleChangeUseDiarization, useTranslation, handleChangeUseTranslation}) {
+    
     function ModelRadioButton({model}) {
         return (
             <>
@@ -251,6 +298,7 @@ function Inputs({enableTranscribe, handleChangeFiles, modelInUse, handleChangeMo
             </>
         );
     }
+
     function InputModeRadioButton({mode, label}) {
         return (
             <>
@@ -260,6 +308,7 @@ function Inputs({enableTranscribe, handleChangeFiles, modelInUse, handleChangeMo
             </>
         );
     }
+
     function ProcessingModeRadioButton({mode, disabled}) {
         return (
             <>
@@ -272,6 +321,7 @@ function Inputs({enableTranscribe, handleChangeFiles, modelInUse, handleChangeMo
             </>
         )
     }
+
     return (
         <fieldset>
             <div>
@@ -325,6 +375,7 @@ function Inputs({enableTranscribe, handleChangeFiles, modelInUse, handleChangeMo
         </fieldset>
     );
 }
+
 function Outputs({outputHeader, tabIndex, handleChangeTab, transcripts, languages, filenames, showLoadingSpinner}) {
     const tabsArray = []
     for (let i = 0; i < filenames.length; i++) {
@@ -346,6 +397,7 @@ function Outputs({outputHeader, tabIndex, handleChangeTab, transcripts, language
             </Paper> 
         </div>
     );
+
      // text with newlines doesn't render properly in HTML; use this to put each newline into an html paragraph.
     function NewlineText(text) {
         const newText = text.split('\n').map(str => <p>{str}</p>)
