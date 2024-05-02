@@ -96,7 +96,7 @@ function App() {
             })
         .then((response) => { handleBatchedBackendResponse(response)})
         .catch((error) => {handleNetworkErrors(error)})
-        .finally(() => {setShowLoadingSpinner(false); setEnableTranscribe(true)})
+        .finally(() => {endOfProcessing()})
     }
 
     function handleBatchedBackendResponse(response) {
@@ -122,7 +122,7 @@ function App() {
             })
         .then((response) => { handleSequentialBackendResponse(response)})
         .catch((error) => {handleNetworkErrors(error)})
-        .finally(() => {setShowLoadingSpinner(false); setEnableTranscribe(true)})
+        .finally(() => {if (idx === files.length) {endOfProcessing()}})
     }
 
     function handleSequentialBackendResponse(response) {
@@ -151,6 +151,11 @@ function App() {
             }
         }
         return formData
+    }
+
+    function endOfProcessing() {
+        setShowLoadingSpinner(false)
+        setEnableTranscribe(true)
     }
 
     function handleNetworkErrors(error) {
