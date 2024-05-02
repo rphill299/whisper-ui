@@ -32,9 +32,9 @@ def init():
     response = { 'outputFolder' : DEFAULT_OUTPUT_DIR } 
     return response
     
-@app.route('/transcribe/', methods = ['POST'])
+@app.route('/batched-transcribe/', methods = ['POST'])
 @cross_origin()
-def transcribe():
+def batchedTranscribe():
     print("received batched whisper transcribe request", file=PRINT_TO_CONSOLE)
     
     # prepares the files for transcription
@@ -63,9 +63,44 @@ def transcribe():
         transcripts = processor.batch_decode(result, skip_special_tokens=True)
 
     response = {'status'    : 0,
-                'transcript': transcripts,
+                'transcripts': transcripts,
                 'languages'  : languages}
 
     if request.args.get('saveOutputs') == 'true' :
         saveTextOutputs(request.args.get('outputFolder'), filepaths, transcripts)
     return response
+
+@app.route('/single-transcribe/', methods = ['POST'])
+@cross_origin()
+def singleTranscribe():
+    # prepares the file for transcription
+    filepaths, _files = prepFiles(request)
+    filepath, file = filepaths[0], _files[0]
+    print("received single whisper transcribe request for " + filepath, file=PRINT_TO_CONSOLE)
+
+    audio = loadAudio(file)
+    diarize = request.args.get("diarize") == 'true' 
+    translate = request.args.get('translate') == 'true' 
+
+    if diarize and translate :
+        # TODO: handle diarize and translate
+        pass
+    elif diarize :
+        # TODO: handle diarization
+        pass
+    elif translate :
+        # TODO: handle translation
+        pass
+    else :
+        # Simple transcribe
+        ret = model.transcribe(audio)
+
+    if request.args.get('saveOutputs') == 'true' :
+        outputFolder = request.args.get('outputFolder')
+        # TODO: handle saving sequentially; not sure how timestamps fit in here.
+
+    return {
+        'status'        : 0,
+        'transcript'    : ret['text'],
+        'language'      : ret['language']
+    }

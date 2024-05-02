@@ -78,7 +78,7 @@ function App() {
                 batchedBackendTranscribeCall(audioFiles, audioFilenames)
             } 
             else if (processingMode === 'Sequential') {
-                sequentialTranscribeCall(audioFiles, audioFilenames, '/transcribe/')
+                sequentialTranscribeCall(audioFiles, audioFilenames, '/single-transcribe/')
             }
         }
     }
@@ -87,7 +87,7 @@ function App() {
         // create form data storing raw files to pass to backend
         const formData = createFormData(audioFiles, audioFilenames)
         // send form data, along with params and proper headers, to backend, and handle response
-        axios.post('/transcribe/', 
+        axios.post('/batched-transcribe/', 
             formData, 
             { headers: { 'Content-Type': 'multipart/form-data' },
                 params: {'saveOutputs': saveOutputs, "outputFolder": outputFolder}
@@ -102,7 +102,7 @@ function App() {
         console.log("Batched Backend Response:", data)
         const status = data.status;
         if (status === 0) {
-            setTranscripts(data.transcript)
+            setTranscripts(data.transcripts)
             setLanguages(data.languages)
         } else {
             alert(status);
@@ -134,8 +134,8 @@ function App() {
         console.log("Sequential Backend Response:", data)
         const status = data.status;
         if (status === 0) {
-            trans.push(data.transcript[0])
-            langs.push(data.languages[0])
+            trans.push(data.transcript)
+            langs.push(data.language)
             setTranscripts(trans)
             setLanguages(langs)
         } else {
