@@ -66,25 +66,36 @@ function App() {
         setLanguages([])
         setEnableTranscribe(false)
 
+        // get filenames from user selection
+        const allFilenames = Array.from(files).map(f => f.name);
+        // filter out audio filenames
+        const audioFilenames = allFilenames.filter((fn) => isAudioFilename(fn))
+        // set filenames and output header 
+        setFilenames(audioFilenames)
+        setOutputHeader('Transcribing ' + audioFilenames.length + ' file' + (audioFilenames.length===1 ? '' : 's') + ' using ' + model + ':')
+
         if (model === 'Whisper') {
-            // get filenames from user selection
-            const allFilenames = Array.from(files).map(f => f.name);
-            // filter out audio filenames
-            const audioFilenames = allFilenames.filter((fn) => isAudioFilename(fn))
-            setFilenames(audioFilenames)
-            setOutputHeader('Transcribing ' + audioFilenames.length + ' file' + (audioFilenames.length===1 ? '' : 's') + ' using ' + model + ':')
-            // create form data storing raw files to pass to backend
-            const formData = createFormData(allFilenames)
-            // send form data, along with params and proper headers, to backend, and handle response
-            axios.post('/transcribe/', 
-                formData, 
-                { headers: { 'Content-Type': 'multipart/form-data' },
-                    params: {'saveOutputs': saveOutputs, "outputFolder": outputFolder}
-                })
-            .then((response) => { handleBackendResponse(response)})
-            .catch((error) => {handleNetworkErrors(error)})
-            .finally(() => {setShowLoadingSpinner(false); setEnableTranscribe(true)})
+            if (processingMode === 'Batched') {
+                backendTranscribeCall(allFilenames)
+            } 
+            else if (processingMode === 'Sequential') {
+                
+            }
         }
+    }
+
+    function backendTranscribeCall(allFilenames) {
+        // create form data storing raw files to pass to backend
+        const formData = createFormData(allFilenames)
+        // send form data, along with params and proper headers, to backend, and handle response
+        axios.post('/transcribe/', 
+            formData, 
+            { headers: { 'Content-Type': 'multipart/form-data' },
+                params: {'saveOutputs': saveOutputs, "outputFolder": outputFolder}
+            })
+        .then((response) => { handleBackendResponse(response)})
+        .catch((error) => {handleNetworkErrors(error)})
+        .finally(() => {setShowLoadingSpinner(false); setEnableTranscribe(true)})
     }
 
     // creates a new formdata object with raw (audio only) files
