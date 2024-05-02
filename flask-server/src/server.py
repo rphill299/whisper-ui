@@ -41,7 +41,6 @@ def transcribe():
     filepaths, _files = prepFiles(request)
     transcripts = []
     languages = []
-
     if not torch.cuda.is_available() : #cpu
         for _file in _files :
             audio = loadAudio(_file)
@@ -69,5 +68,4 @@ def transcribe():
 
     if request.args.get('saveOutputs') == 'true' :
         saveTextOutputs(request.args.get('outputFolder'), filepaths, transcripts)
-        
     return response

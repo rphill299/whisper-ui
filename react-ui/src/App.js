@@ -78,7 +78,7 @@ function App() {
                 batchedBackendTranscribeCall(audioFiles, audioFilenames)
             } 
             else if (processingMode === 'Sequential') {
-                sequentialTranscribeCall(audioFiles, audioFilenames, 0)
+                sequentialTranscribeCall(audioFiles, audioFilenames, '/transcribe/')
             }
         }
     }
@@ -109,42 +109,35 @@ function App() {
         }
     }
 
-    function sequentialTranscribeCall(audioFiles, audioFilenames, idx) {
-        console.log(audioFiles[idx], audioFilenames[idx])
+    function sequentialTranscribeCall(audioFiles, audioFilenames, endpoint, idx=0, trans=[], langs=[]) {
         // create form data storing raw files to pass to backend
-        let formData = createFormData([audioFiles[idx]], [audioFilenames[idx]])
-        console.log(formData)
+        const formData = createFormData([audioFiles[idx]], [audioFilenames[idx]])
         // send form data, along with params and proper headers, to backend, and handle response
-        axios.post('/transcribe/', 
+        axios.post(endpoint, 
             formData, 
             { headers: { 'Content-Type': 'multipart/form-data' },
                 params: {'saveOutputs': saveOutputs, "outputFolder": outputFolder}
             })
-        .then((response) => { handleSequentialBackendResponse(response)})
+        .then((response) => { handleSequentialBackendResponse(response, trans, langs)})
         .catch((error) => {handleNetworkErrors(error)})
         .finally(() => {
             if (idx === audioFiles.length-1) {
                 endOfProcessing()
             } else {
-                
-                sequentialTranscribeCall(audioFiles, audioFilenames, idx+1)
+                sequentialTranscribeCall(audioFiles, audioFilenames, endpoint, idx+1, trans, langs)
             }
         })
     }
 
-    function handleSequentialBackendResponse(response) {
+    function handleSequentialBackendResponse(response, trans, langs) {
         const data = response.data;
         console.log("Sequential Backend Response:", data)
         const status = data.status;
         if (status === 0) {
-            const new_trans = structuredClone(transcripts)
-            const new_langs = structuredClone(languages)
-            console.log("Updating", new_trans)
-            new_trans.push(data.transcript[0])
-            console.log("to", new_trans)
-            new_langs.push(data.languages[0])
-            setTranscripts(new_trans)
-            setLanguages(new_langs)
+            trans.push(data.transcript[0])
+            langs.push(data.languages[0])
+            setTranscripts(trans)
+            setLanguages(langs)
         } else {
             alert(status);
         }
@@ -154,11 +147,11 @@ function App() {
     function createFormData(audioFiles, audioFilenames) {
         const formData = new FormData()
         for (let i=0; i<audioFiles.length; i++) {
-            const fileRelPath = files[i].webkitRelativePath
+            const fileRelPath = audioFiles[i].webkitRelativePath
             if (fileRelPath === '') { // means user passed files only
-                formData.append(audioFilenames[i], files[i]);
+                formData.append(audioFilenames[i], audioFiles[i]);
             } else { // means user passed a folder 
-                formData.append(fileRelPath, files[i])
+                formData.append(fileRelPath, audioFiles[i])
             }
         }
         return formData
