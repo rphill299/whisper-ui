@@ -327,7 +327,7 @@ function Inputs({enableTranscribe, handleChangeFiles, modelInUse, handleChangeMo
     }
 
     return (
-        <fieldset>
+        <>
             <div>
                 <InputModeRadioButton mode="file" label={"I have a file"}></InputModeRadioButton>
                 <InputModeRadioButton mode="folder" label={"I have a folder"}></InputModeRadioButton>
@@ -377,7 +377,7 @@ function Inputs({enableTranscribe, handleChangeFiles, modelInUse, handleChangeMo
             <div>
                 <button type='submit' onClick={handleTranscribeButtonClick} size="lg" disabled={!enableTranscribe}>Transcribe</button>
             </div>
-        </fieldset>
+        </>
     );
 }
 
@@ -388,7 +388,7 @@ function Outputs({outputHeader, tabIndex, handleChangeTab, transcripts, language
     }
     
     return outputHeader && (
-        <div>
+        <>
             <h3>
                 {outputHeader}
             </h3>
@@ -400,7 +400,7 @@ function Outputs({outputHeader, tabIndex, handleChangeTab, transcripts, language
                 {transcripts[tabIndex] && NewlineText(transcripts[tabIndex])}
                 {languages[tabIndex] && (<p>Language Detected: {languages[tabIndex]}</p>)}
             </Paper> 
-        </div>
+        </>
     );
 
      // text with newlines doesn't render properly in HTML; use this to put each newline into an html paragraph.

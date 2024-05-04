@@ -3,7 +3,6 @@
   align-items: center;
   text-align: center;
   font-size: larger;
-  color: #61056d;
 }
 
 .statusBar {
@@ -16,7 +15,10 @@
   right:0;
   padding-bottom:4px;
   font-size: smaller;
-  color: #61056d;
+}
+
+.App, .statusBar {
+  color: black;
 }
 
 .App-logo {
