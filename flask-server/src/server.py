@@ -22,6 +22,7 @@ PROJ_DIR = CURR_DIR
 DEFAULT_OUTPUT_DIR = join("outputs","")
 
 model = whisper.load_model("base")
+cudaAvailable = torch.cuda.is_available()
 
 # this is called once when the app starts up
 # simply returns a default data folder in the correct formatting of the user's os
@@ -29,7 +30,7 @@ model = whisper.load_model("base")
 @cross_origin()
 def init():
     print("received initial request", file=PRINT_TO_CONSOLE)
-    response = { 'outputFolder' : DEFAULT_OUTPUT_DIR } 
+    response = { 'outputFolder' : DEFAULT_OUTPUT_DIR , 'cudaAvailable' : cudaAvailable} 
     return response
     
 @app.route('/batched-transcribe/', methods = ['POST'])
@@ -41,7 +42,7 @@ def batchedTranscribe():
     filepaths, _files = prepFiles(request)
     transcripts = []
     languages = []
-    if not torch.cuda.is_available() : #cpu
+    if not cudaAvailable : #cpu
         for _file in _files :
             audio = loadAudio(_file)
             ret = model.transcribe(audio)

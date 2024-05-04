@@ -16,6 +16,7 @@ function App() {
     const [files, setFiles] = useState([]) //stores return value of file selector
     const [outputHeader, setOutputHeader] = useState(); // gives output details
     const [outputFolder, setOutputFolder] = useState("Refresh once backend starts up")
+    const [cudaAvailable, setCudaAvailable] = useState()
     const [tabIndex, setTabIndex] = useState(0)
     const [transcripts, setTranscripts] = useState([])
     const [filenames, setFilenames] = useState([])
@@ -24,7 +25,7 @@ function App() {
     const [optionsVisible, setOptionsVisible] = useState(false) // toggle options
     const [saveOutputs, setSaveOutputs] = useState(false) // toggle whether outputs are auto-saved or not
     const [showLoadingSpinner, setShowLoadingSpinner] = useState(false)
-    const [processingMode, setProcessingMode] = useState("Batched") // Either 'Batched' or 'Sequential'
+    const [hardware, setHardware] = useState() // Either 'GPU' or 'CPU'
     const [useDiarization, setUseDiarization] = useState(false)
     const [useTranslation, setUseTranslation] = useState(false)
     const [languages, setLanguages] = useState([])
@@ -35,11 +36,14 @@ function App() {
     if (outputFolder === "Refresh once backend starts up") {
         axios.get('/init/').then((response) => {
             // get data
-            const data = response.data 
+            const data = response.data
             // get a value from data ( stored as { 'outputFolder' : value } )
             const defaultOutputFolder = data.outputFolder
+            const ca = data.cudaAvailable
             // do what we want with fetched value
             setOutputFolder(defaultOutputFolder)
+            setCudaAvailable(ca === true)
+            setHardware(ca ? 'GPU' : 'CPU')
         }).catch((error) => {handleNetworkErrors(error)}) // catch and report any network errors
     }
   
@@ -73,10 +77,10 @@ function App() {
         setOutputHeader('Transcribing ' + audioFilenames.length + ' file' + (audioFilenames.length===1 ? '' : 's') + ' using ' + model + ':')
 
         if (model === 'Whisper') {
-            if (processingMode === 'Batched') {
+            if (hardware === 'GPU') {
                 batchedBackendTranscribeCall(audioFiles, audioFilenames)
             } 
-            else if (processingMode === 'Sequential') {
+            else if (hardware === 'CPU') {
                 sequentialTranscribeCall(audioFiles, audioFilenames, '/single-transcribe/')
             }
         }
@@ -226,8 +230,8 @@ function App() {
         setSaveOutputs(!saveOutputs)
     }
 
-    function handleChangeProcessingMode(event) {
-        setProcessingMode(event.target.value)
+    function handleChangeHardware(event) {
+        setHardware(event.target.value)
     }
 
     function handleChangeUseDiarization(event) {
@@ -259,8 +263,8 @@ function App() {
                     handleChangeSaveOutputs={handleChangeSaveOutputs}
                     outputFolder={outputFolder}
                     handleChangeOutputFolder={handleChangeOutputFolder}
-                    processingMode={processingMode}
-                    handleChangeProcessingMode={handleChangeProcessingMode}
+                    hardware={hardware}
+                    handleChangeHardware={handleChangeHardware}
                     useDiarization={useDiarization}
                     handleChangeUseDiarization={handleChangeUseDiarization}
                     useTranslation={useTranslation}
@@ -285,7 +289,7 @@ function App() {
 
 function Inputs({enableTranscribe, handleChangeFiles, modelInUse, handleChangeModel, handleTranscribeButtonClick, 
     inputMode, handleChangeInputMode, optionsVisible, handleOptionsButtonClick, saveOutputs, handleChangeSaveOutputs, outputFolder, handleChangeOutputFolder,
-    processingMode, handleChangeProcessingMode, useDiarization, handleChangeUseDiarization, useTranslation, handleChangeUseTranslation}) {
+    hardware, handleChangeHardware, useDiarization, handleChangeUseDiarization, useTranslation, handleChangeUseTranslation}) {
     
     function ModelRadioButton({model}) {
         return (
@@ -307,13 +311,12 @@ function Inputs({enableTranscribe, handleChangeFiles, modelInUse, handleChangeMo
         );
     }
 
-    function ProcessingModeRadioButton({mode, disabled}) {
+    function HardwareRadioButton({mode}) {
         return (
             <>
-                <input id={mode} type='radio' name='processing' value={mode}  
-                    disabled={disabled}
-                    checked={mode === processingMode} 
-                    onChange={handleChangeProcessingMode}
+                <input id={mode} type='radio' name='hardware' value={mode}  
+                    checked={mode === hardware} 
+                    onChange={handleChangeHardware}
                     />
                 <label for={mode}>{mode}</label>
             </>
@@ -334,9 +337,9 @@ function Inputs({enableTranscribe, handleChangeFiles, modelInUse, handleChangeMo
                 {optionsVisible && (
                     <div>
                         <div> 
-                            <label>Processing Mode:</label>
-                            <ProcessingModeRadioButton mode="Batched"></ProcessingModeRadioButton>
-                            <ProcessingModeRadioButton mode="Sequential"></ProcessingModeRadioButton>
+                            <label>Hardware:</label>
+                            <HardwareRadioButton mode="GPU"></HardwareRadioButton>
+                            <HardwareRadioButton mode="CPU"></HardwareRadioButton>
                         </div>
                         {/* <div>  
                             <label>Model: </label> 
@@ -347,23 +350,23 @@ function Inputs({enableTranscribe, handleChangeFiles, modelInUse, handleChangeMo
                         </div>
                         <div>
                             <label>
-                                <input type='checkbox' checked={saveOutputs} onChange={handleChangeSaveOutputs} disabled={processingMode === 'Sequential'}/>
+                                <input type='checkbox' checked={saveOutputs} onChange={handleChangeSaveOutputs} disabled={hardware === 'CPU'}/>
                                 Save all output
                             </label>
                             <label>
                                 <input 
-                                    type='checkbox' checked={useDiarization} onChange={handleChangeUseDiarization} disabled={processingMode === 'Batched'}/>
+                                    type='checkbox' checked={useDiarization} onChange={handleChangeUseDiarization} disabled={hardware === 'GPU'}/>
                                 Diarization
                             </label>
                             <label>
-                                <input type='checkbox' checked={useTranslation} onChange={handleChangeUseTranslation} disabled={processingMode === 'Batched'}/>
+                                <input type='checkbox' checked={useTranslation} onChange={handleChangeUseTranslation} disabled={hardware === 'GPU'}/>
                                 Translation
                             </label>
                         </div>
                         {saveOutputs && 
                             (<div>
                                 <label>Output Folder: </label>
-                                <input type='text' defaultValue={outputFolder} onChange={handleChangeOutputFolder} disabled={processingMode === 'Sequential'}/>
+                                <input type='text' defaultValue={outputFolder} onChange={handleChangeOutputFolder} disabled={hardware === 'CPU'}/>
                             </div>)}
                     </div>
                 )}
