@@ -6,6 +6,19 @@
   color: #61056d;
 }
 
+.statusBar {
+  justify-content: left;
+  align-items: left;
+  text-align: left;
+  position:absolute;
+  left:0;
+  bottom:0;
+  right:0;
+  padding-bottom:4px;
+  font-size: smaller;
+  color: #61056d;
+}
+
 .App-logo {
   height: 40vmin;
   pointer-events: none;

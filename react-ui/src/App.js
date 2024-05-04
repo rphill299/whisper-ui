@@ -30,6 +30,7 @@ function App() {
     const [useTranslation, setUseTranslation] = useState(false)
     const [languages, setLanguages] = useState([])
     const [enableTranscribe, setEnableTranscribe] = useState(true)
+    const [hardwareMessage, setHardwareMessage] = useState("GPU Status: <Refresh once backend starts up>")
 
     /* Simple communication with backend here 
         obtaining default data folder from backend on app  init*/
@@ -44,6 +45,7 @@ function App() {
             setOutputFolder(defaultOutputFolder)
             setCudaAvailable(ca === true)
             setHardware(ca ? 'GPU' : 'CPU')
+            setHardwareMessage(ca ? 'GPU Status: Available' : (<><div>GPU Status: Unavailable</div><div>(Can still select 'GPU' for Saving Outputs; no GPU speedup)</div></>))
         }).catch((error) => {handleNetworkErrors(error)}) // catch and report any network errors
     }
   
@@ -270,7 +272,7 @@ function App() {
                     useTranslation={useTranslation}
                     handleChangeUseTranslation={handleChangeUseTranslation}
                     >
-                </Inputs>      
+                </Inputs>
             </div>
             <div>
                 <Outputs 
@@ -283,6 +285,7 @@ function App() {
                     showLoadingSpinner={showLoadingSpinner}> 
                 </Outputs>
             </div>
+            <div className='statusBar'>{hardwareMessage}</div>
         </div>
     );
 }
