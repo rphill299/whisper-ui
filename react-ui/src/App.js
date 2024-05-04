@@ -25,7 +25,6 @@ function App() {
     const [saveOutputs, setSaveOutputs] = useState(false) // toggle whether outputs are auto-saved or not
     const [showLoadingSpinner, setShowLoadingSpinner] = useState(false)
     const [processingMode, setProcessingMode] = useState("Batched") // Either 'Batched' or 'Sequential'
-    const [prevProcessing, setprevProcessing] = useState("") // tracks previous processing mode for consistency
     const [useDiarization, setUseDiarization] = useState(false)
     const [useTranslation, setUseTranslation] = useState(false)
     const [languages, setLanguages] = useState([])
@@ -233,24 +232,10 @@ function App() {
 
     function handleChangeUseDiarization(event) {
         setUseDiarization(event.target.checked)
-        handleTranslationDiarizationBatchedSequentialLogic(event.target.checked, useTranslation)
     }
 
     function handleChangeUseTranslation(event) {
         setUseTranslation(event.target.checked)
-        handleTranslationDiarizationBatchedSequentialLogic(event.target.checked, useDiarization)
-    }
-
-    function handleTranslationDiarizationBatchedSequentialLogic(checked, useOther) {
-        if (checked || useOther) {
-            if (prevProcessing === "") {
-                setprevProcessing(processingMode)
-                setProcessingMode('Sequential')
-            }
-        } else {
-            setProcessingMode(prevProcessing)
-            setprevProcessing("")
-        }
     }
 
     return (
@@ -350,8 +335,8 @@ function Inputs({enableTranscribe, handleChangeFiles, modelInUse, handleChangeMo
                     <div>
                         <div> 
                             <label>Processing Mode:</label>
-                            <ProcessingModeRadioButton mode="Batched" disabled={useDiarization||useTranslation}></ProcessingModeRadioButton>
-                            <ProcessingModeRadioButton mode="Sequential" disabled={useDiarization||useTranslation}></ProcessingModeRadioButton>
+                            <ProcessingModeRadioButton mode="Batched"></ProcessingModeRadioButton>
+                            <ProcessingModeRadioButton mode="Sequential"></ProcessingModeRadioButton>
                         </div>
                         {/* <div>  
                             <label>Model: </label> 
@@ -362,23 +347,24 @@ function Inputs({enableTranscribe, handleChangeFiles, modelInUse, handleChangeMo
                         </div>
                         <div>
                             <label>
-                                <input type='checkbox' checked={useDiarization} onChange={handleChangeUseDiarization}/>
+                                <input type='checkbox' checked={saveOutputs} onChange={handleChangeSaveOutputs} disabled={processingMode === 'Sequential'}/>
+                                Save all output
+                            </label>
+                            <label>
+                                <input 
+                                    type='checkbox' checked={useDiarization} onChange={handleChangeUseDiarization} disabled={processingMode === 'Batched'}/>
                                 Diarization
                             </label>
                             <label>
-                                <input type='checkbox' checked={useTranslation} onChange={handleChangeUseTranslation}/>
+                                <input type='checkbox' checked={useTranslation} onChange={handleChangeUseTranslation} disabled={processingMode === 'Batched'}/>
                                 Translation
                             </label>
-                            <label>
-                                <input type='checkbox' checked={saveOutputs} onChange={handleChangeSaveOutputs}/>
-                                Save all output
-                            </label>
-                            {saveOutputs && 
+                        </div>
+                        {saveOutputs && 
                             (<div>
                                 <label>Output Folder: </label>
-                                <input type='text' defaultValue={outputFolder} onChange={handleChangeOutputFolder}/>
+                                <input type='text' defaultValue={outputFolder} onChange={handleChangeOutputFolder} disabled={processingMode === 'Sequential'}/>
                             </div>)}
-                        </div>
                     </div>
                 )}
             </div>
