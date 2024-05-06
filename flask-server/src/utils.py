@@ -21,9 +21,12 @@ def loadAudio(file):
 # outputFolder: String - full path to output folder
 # filepaths: [String] - array of filepaths (including extensions)
 # transcripts: [String] - array of transcripts
-def saveTextOutputs(outputFolder, filepaths, transcripts) :
-    current_datetime = datetime.now().strftime("%Y-%m-%d-%H-%M-%S")
-    transcripts_id = str(current_datetime)
+def saveTextOutputs(outputFolder, filepaths, transcripts, *, timestamp='') :
+    if not timestamp:
+        current_datetime = datetime.now().strftime("%Y-%m-%d-%H-%M-%S")
+        transcripts_id = str(current_datetime)
+    else:
+        transcripts_id = timestamp
     for idx, fn in enumerate(filepaths):
         path, filename = split(fn)
         filepath = join(outputFolder, transcripts_id, path)
@@ -31,6 +34,7 @@ def saveTextOutputs(outputFolder, filepaths, transcripts) :
         file = open(join(filepath, filename), 'w+') #open file in write mode
         file.write(transcripts[idx])
         file.close()
+    return transcripts_id
         
 def prepFiles(request):
     filepaths = []

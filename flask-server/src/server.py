@@ -63,12 +63,14 @@ def batchedTranscribe():
 
         transcripts = processor.batch_decode(result, skip_special_tokens=True)
 
-    response = {'status'    : 0,
-                'transcripts': transcripts,
-                'languages'  : languages}
-
     if request.args.get('saveOutputs') == 'true' :
-        saveTextOutputs(request.args.get('outputFolder'), filepaths, transcripts)
+        outputFolder = request.args.get('outputFolder')
+        timestamp = saveTextOutputs(request.args.get('outputFolder'), filepaths, transcripts)
+        
+    response = {'status'    : 0,
+            'transcripts': transcripts,
+            'languages'  : languages,
+            'timestamp' : timestamp}
     return response
 
 @app.route('/single-transcribe/', methods = ['POST'])
@@ -81,7 +83,7 @@ def singleTranscribe():
 
     audio = loadAudio(file)
     diarize = request.args.get("diarize") == 'true' 
-    translate = request.args.get('translate') == 'true' 
+    translate = request.args.get('translate') == 'true'
 
     if diarize and translate :
         # TODO: handle diarize and translate
@@ -98,10 +100,12 @@ def singleTranscribe():
 
     if request.args.get('saveOutputs') == 'true' :
         outputFolder = request.args.get('outputFolder')
+        TS = request.args.get('timestamp')
         # TODO: handle saving sequentially; not sure how timestamps fit in here.
-
-    return {
-        'status'        : 0,
+        timestamp = saveTextOutputs(outputFolder, [filepath], [ret['text']], timestamp=TS)
+        
+    response = {'status'        : 0,
         'transcript'    : ret['text'],
-        'language'      : ret['language']
-    }
+        'language'      : ret['language'],
+        'timestamp'     : timestamp}
+    return response
