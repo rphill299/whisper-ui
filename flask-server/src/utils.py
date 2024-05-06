@@ -1,6 +1,7 @@
 import io
 import librosa
 import sys
+from pydub import AudioSegment
 
 from os import makedirs
 from os.path import join, splitext, split
@@ -16,6 +17,14 @@ def loadAudio(file):
         data = librosa.resample(data, orig_sr=sr, target_sr=16000)
     print(data[:100])
     return data
+
+def read_file_audiosegment(file):
+    return AudioSegment.from_wav(io.BytesIO(file.read()))
+
+def prepend_spacer(audio):
+    spacermilli = 2000
+    spacer = AudioSegment.silent(duration=spacermilli)
+    return spacer.append(audio, crossfade=0)
 
 # saves transcripts[i] with filename outputFolder+filepaths[i]
 # outputFolder: String - full path to output folder

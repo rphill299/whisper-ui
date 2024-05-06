@@ -121,7 +121,7 @@ function App() {
         axios.post(endpoint, 
             formData, 
             { headers: { 'Content-Type': 'multipart/form-data' },
-                params: {'saveOutputs': saveOutputs, "outputFolder": outputFolder}
+                params: {'saveOutputs': saveOutputs, "outputFolder": outputFolder, "diarize": useDiarization }
             })
         .then((response) => { handleSequentialBackendResponse(response, trans, langs)})
         .catch((error) => {handleNetworkErrors(error)})
