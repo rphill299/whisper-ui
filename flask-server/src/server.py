@@ -71,13 +71,16 @@ def batchedTranscribe():
 
         transcripts = processor.batch_decode(result, skip_special_tokens=True)
 
-    response = {'status'    : 0,
-                'transcripts': transcripts,
-                'languages'  : languages}
+    return_dict = {'status'    : 0,
+            'transcripts': transcripts,
+            'languages'  : languages}
 
     if request.args.get('saveOutputs') == 'true' :
-        saveTextOutputs(request.args.get('outputFolder'), filepaths, transcripts)
-    return response
+        outputFolder = request.args.get('outputFolder')
+        timestamp = saveTextOutputs(request.args.get('outputFolder'), filepaths, transcripts)
+        return_dict['timestamp'] = timestamp
+        
+    return return_dict
 
 @app.route('/single-transcribe/', methods = ['POST'])
 @cross_origin()
@@ -88,9 +91,8 @@ def singleTranscribe():
     print("received single whisper transcribe request for " + filepath, file=PRINT_TO_CONSOLE)
 
     #audio = loadAudio(file)
-    diarize = request.args.get("diarize") == 'true' 
-    translate = request.args.get('translate') == 'true' 
-    print("diarize = ", request.args.get("diarize"))
+    diarize = request.args.get("diarize") == 'true'
+    translate = request.args.get('translate') == 'true'
     if diarize and translate :
         # TODO: handle diarize and translate
         pass
@@ -168,7 +170,7 @@ def singleTranscribe():
             raw_audio.append(fp_arr)
             #print(raw_audio)
         print("raw audio has ", len(raw_audio), "entries")
-        if False:
+        if cudaAvailable:
             processor = AutoProcessor.from_pretrained("openai/whisper-medium.en")
             inputs = processor(raw_audio, return_tensors="pt", truncation=False, padding="longest", return_attention_mask=True, sampling_rate=16_000)
             #print(inputs.shape)
@@ -220,15 +222,14 @@ def singleTranscribe():
         # Simple transcribe
         audio = loadAudio(file)
         ret = model.transcribe(audio)
-        return_dict = {
-        'status'        : 0,
-        'transcript'    : ret['text'],
-        'language'      : ret['language']
-        }
+        return_dict = {'status'        : 0,
+            'transcript'    : ret['text'],
+            'language'      : ret['language']}
 
     if request.args.get('saveOutputs') == 'true' :
         outputFolder = request.args.get('outputFolder')
-        # TODO: handle saving sequentially; not sure how timestamps fit in here.
-    
+        TS = request.args.get('timestamp')
+        timestamp = saveTextOutputs(outputFolder, [filepath], [ret['text']], timestamp=TS)
+        return_dict['timestamp'] = timestamp
     
     return return_dict

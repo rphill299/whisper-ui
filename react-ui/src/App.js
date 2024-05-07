@@ -28,6 +28,7 @@ function App() {
     const [hardware, setHardware] = useState() // Either 'GPU' or 'CPU'
     const [useDiarization, setUseDiarization] = useState(false)
     const [useTranslation, setUseTranslation] = useState(false)
+    const [timestamp, setTimestamp] = useState('')
     const [languages, setLanguages] = useState([])
     const [enableTranscribe, setEnableTranscribe] = useState(true)
     const [hardwareMessage, setHardwareMessage] = useState("GPU Status: <Refresh once backend starts up>")
@@ -45,7 +46,7 @@ function App() {
             setOutputFolder(defaultOutputFolder)
             setCudaAvailable(ca === true)
             setHardware(ca ? 'GPU' : 'CPU')
-            setHardwareMessage(ca ? 'GPU Status: Available' : (<><div>GPU Status: Unavailable</div><div>(Can still select 'GPU' for Saving Outputs; no GPU speedup)</div></>))
+            setHardwareMessage(ca ? 'GPU Status: Available' : 'GPU Status: Unvailable')
         }).catch((error) => {handleNetworkErrors(error)}) // catch and report any network errors
     }
   
@@ -114,33 +115,34 @@ function App() {
         }
     }
 
-    function sequentialTranscribeCall(audioFiles, audioFilenames, endpoint, idx=0, trans=[], langs=[]) {
+    function sequentialTranscribeCall(audioFiles, audioFilenames, endpoint, idx=0, trans=[], langs=[], timestamp=['']) {
         // create form data storing raw files to pass to backend
         const formData = createFormData([audioFiles[idx]], [audioFilenames[idx]])
         // send form data, along with params and proper headers, to backend, and handle response
         axios.post(endpoint, 
             formData, 
             { headers: { 'Content-Type': 'multipart/form-data' },
-                params: {'saveOutputs': saveOutputs, "outputFolder": outputFolder, "diarize": useDiarization }
+                params: {'saveOutputs': saveOutputs, "outputFolder": outputFolder, "diarize": useDiarization, "timestamp": timestamp.pop()}
             })
-        .then((response) => { handleSequentialBackendResponse(response, trans, langs)})
+        .then((response) => { handleSequentialBackendResponse(response, trans, langs, timestamp)})
         .catch((error) => {handleNetworkErrors(error)})
         .finally(() => {
             if (idx === audioFiles.length-1) {
                 endOfProcessing()
             } else {
-                sequentialTranscribeCall(audioFiles, audioFilenames, endpoint, idx+1, trans, langs)
+                sequentialTranscribeCall(audioFiles, audioFilenames, endpoint, idx+1, trans, langs, timestamp)
             }
         })
     }
 
-    function handleSequentialBackendResponse(response, trans, langs) {
+    function handleSequentialBackendResponse(response, trans, langs, timestamp) {
         const data = response.data;
         console.log("Sequential Backend Response:", data)
         const status = data.status;
         if (status === 0) {
             trans.push(data.transcript)
             langs.push(data.language)
+            timestamp.push(data.timestamp)
             setTranscripts(trans)
             setLanguages(langs)
         } else {
@@ -165,6 +167,7 @@ function App() {
     function endOfProcessing() {
         setShowLoadingSpinner(false)
         setEnableTranscribe(true)
+        setTimestamp('')
     }
 
     function handleNetworkErrors(error) {
@@ -353,12 +356,12 @@ function Inputs({enableTranscribe, handleChangeFiles, modelInUse, handleChangeMo
                         </div>
                         <div>
                             <label>
-                                <input type='checkbox' checked={saveOutputs} onChange={handleChangeSaveOutputs} disabled={hardware === 'CPU'}/>
+                                <input type='checkbox' checked={saveOutputs} onChange={handleChangeSaveOutputs}/>
                                 Save all output
                             </label>
                             <label>
                                 <input 
-                                    type='checkbox' checked={useDiarization} onChange={handleChangeUseDiarization} disabled={hardware === 'GPU'}/>
+                                    type='checkbox' checked={useDiarization} onChange={handleChangeUseDiarization}/>
                                 Diarization
                             </label>
                             <label>
@@ -369,7 +372,7 @@ function Inputs({enableTranscribe, handleChangeFiles, modelInUse, handleChangeMo
                         {saveOutputs && 
                             (<div>
                                 <label>Output Folder: </label>
-                                <input type='text' defaultValue={outputFolder} onChange={handleChangeOutputFolder} disabled={hardware === 'CPU'}/>
+                                <input type='text' defaultValue={outputFolder} onChange={handleChangeOutputFolder}/>
                             </div>)}
                     </div>
                 )}
