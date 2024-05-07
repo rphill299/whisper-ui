@@ -274,6 +274,7 @@ function App() {
                     handleChangeUseDiarization={handleChangeUseDiarization}
                     useTranslation={useTranslation}
                     handleChangeUseTranslation={handleChangeUseTranslation}
+                    cudaAvailable={cudaAvailable}
                     >
                 </Inputs>
             </div>
@@ -295,7 +296,7 @@ function App() {
 
 function Inputs({enableTranscribe, handleChangeFiles, modelInUse, handleChangeModel, handleTranscribeButtonClick, 
     inputMode, handleChangeInputMode, optionsVisible, handleOptionsButtonClick, saveOutputs, handleChangeSaveOutputs, outputFolder, handleChangeOutputFolder,
-    hardware, handleChangeHardware, useDiarization, handleChangeUseDiarization, useTranslation, handleChangeUseTranslation}) {
+    hardware, handleChangeHardware, useDiarization, handleChangeUseDiarization, useTranslation, handleChangeUseTranslation, cudaAvailable}) {
     
     function ModelRadioButton({model}) {
         return (
@@ -317,12 +318,13 @@ function Inputs({enableTranscribe, handleChangeFiles, modelInUse, handleChangeMo
         );
     }
 
-    function HardwareRadioButton({mode}) {
+    function HardwareRadioButton({mode, disabled}) {
         return (
             <>
                 <input id={mode} type='radio' name='hardware' value={mode}  
                     checked={mode === hardware} 
                     onChange={handleChangeHardware}
+                    disabled={disabled}
                     />
                 <label for={mode}>{mode}</label>
             </>
@@ -344,8 +346,8 @@ function Inputs({enableTranscribe, handleChangeFiles, modelInUse, handleChangeMo
                     <div>
                         <div> 
                             <label>Hardware:</label>
-                            <HardwareRadioButton mode="GPU"></HardwareRadioButton>
-                            <HardwareRadioButton mode="CPU"></HardwareRadioButton>
+                            <HardwareRadioButton mode="GPU" disabled={!cudaAvailable}></HardwareRadioButton>
+                            <HardwareRadioButton mode="CPU" disabled={false}></HardwareRadioButton>
                         </div>
                         {/* <div>  
                             <label>Model: </label> 
