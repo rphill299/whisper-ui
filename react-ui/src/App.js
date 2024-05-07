@@ -80,10 +80,10 @@ function App() {
         setOutputHeader('Transcribing ' + audioFilenames.length + ' file' + (audioFilenames.length===1 ? '' : 's') + ' using ' + model + ':')
 
         if (model === 'Whisper') {
-            if (hardware === 'GPU') {
+            if (hardware === 'GPU' && !useDiarization) {
                 batchedBackendTranscribeCall(audioFiles, audioFilenames)
             } 
-            else if (hardware === 'CPU') {
+            else /*if (hardware === 'CPU') || useDiarization*/ {
                 sequentialTranscribeCall(audioFiles, audioFilenames, '/single-transcribe/')
             }
         }
