@@ -361,7 +361,7 @@ function Inputs({enableTranscribe, handleChangeFiles, modelInUse, handleChangeMo
                             </label>
                             <label>
                                 <input 
-                                    type='checkbox' checked={useDiarization} onChange={handleChangeUseDiarization}/>
+                                    type='checkbox' checked={useDiarization} onChange={handleChangeUseDiarization} disabled={hardware==="CPU"}/>
                                 Diarization
                             </label>
                             <label>
