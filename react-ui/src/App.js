@@ -46,7 +46,7 @@ function App() {
             setOutputFolder(defaultOutputFolder)
             setCudaAvailable(ca === true)
             setHardware(ca ? 'GPU' : 'CPU')
-            setHardwareMessage(ca ? 'GPU Status: Available' : (<><div>GPU Status: Unavailable</div><div>(Can still select 'GPU' for Saving Outputs; no GPU speedup)</div></>))
+            setHardwareMessage(ca ? 'GPU Status: Available' : 'GPU Status: Unvailable')
         }).catch((error) => {handleNetworkErrors(error)}) // catch and report any network errors
     }
   
@@ -361,7 +361,7 @@ function Inputs({enableTranscribe, handleChangeFiles, modelInUse, handleChangeMo
                             </label>
                             <label>
                                 <input 
-                                    type='checkbox' checked={useDiarization} onChange={handleChangeUseDiarization} disabled={hardware === 'GPU'}/>
+                                    type='checkbox' checked={useDiarization} onChange={handleChangeUseDiarization}/>
                                 Diarization
                             </label>
                             <label>
@@ -372,7 +372,7 @@ function Inputs({enableTranscribe, handleChangeFiles, modelInUse, handleChangeMo
                         {saveOutputs && 
                             (<div>
                                 <label>Output Folder: </label>
-                                <input type='text' defaultValue={outputFolder} onChange={handleChangeOutputFolder} disabled={hardware === 'CPU'}/>
+                                <input type='text' defaultValue={outputFolder} onChange={handleChangeOutputFolder}/>
                             </div>)}
                     </div>
                 )}
