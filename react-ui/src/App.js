@@ -96,7 +96,7 @@ function App() {
         axios.post('/batched-transcribe/', 
             formData, 
             { headers: { 'Content-Type': 'multipart/form-data' },
-                params: {'saveOutputs': saveOutputs, "outputFolder": outputFolder}
+                params: {'saveOutputs': saveOutputs, "outputFolder": outputFolder, "diarize": useDiarization, "translate": useTranslation}
             })
         .then((response) => { handleBatchedBackendResponse(response)})
         .catch((error) => {handleNetworkErrors(error)})
@@ -365,7 +365,7 @@ function Inputs({enableTranscribe, handleChangeFiles, modelInUse, handleChangeMo
                                 Diarization
                             </label>
                             <label>
-                                <input type='checkbox' checked={useTranslation} onChange={handleChangeUseTranslation} disabled={hardware === 'GPU'}/>
+                                <input type='checkbox' checked={useTranslation} onChange={handleChangeUseTranslation}/>
                                 Translation
                             </label>
                         </div>

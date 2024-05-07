@@ -48,12 +48,17 @@ def batchedTranscribe():
     
     # prepares the files for transcription
     filepaths, _files = prepFiles(request)
+    translate = request.args.get("translate")
+    diarize = request.args.get("diarize")
     transcripts = []
     languages = []
-    if not cudaAvailable : #cpu
+    if translate or (not cudaAvailable) : #cpu # or translate, until it can be handled in the gpu part
         for _file in _files :
             audio = loadAudio(_file)
-            ret = model.transcribe(audio)
+            if translate :
+                ret = model.transcribe(audio, task="translate")
+            else : 
+                ret = model.transcribe(audio)
             transcripts.append(ret['text'])
             languages.append(ret['language'])
 
