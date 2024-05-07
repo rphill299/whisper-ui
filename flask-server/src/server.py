@@ -168,38 +168,50 @@ def singleTranscribe():
             raw_audio.append(fp_arr)
             #print(raw_audio)
         print("raw audio has ", len(raw_audio), "entries")
-        processor = AutoProcessor.from_pretrained("openai/whisper-medium.en")
-        inputs = processor(raw_audio, return_tensors="pt", truncation=False, padding="longest", return_attention_mask=True, sampling_rate=16_000)
-        #print(inputs.shape)
-        
-        print("right before generation")
-        # Check and pad the mel spectrogram length to 3000 if necessary
-        mel_length = inputs.input_features.shape[2]  # Use shape[2] for the time dimension
-        if mel_length < 3000:
-            padding_length = 3000 - mel_length
-            padded_mel_features = torch.nn.functional.pad(inputs.input_features, (0, padding_length), mode='constant', value=0)
-            padded_attention_mask = torch.nn.functional.pad(inputs.attention_mask, (0, padding_length), mode='constant', value=0)
-            inputs['input_features'] = padded_mel_features  # Ensuring correct key assignment
-            inputs['attention_mask'] = padded_attention_mask  # Update the attention mask accordingly
+        if False:
+            processor = AutoProcessor.from_pretrained("openai/whisper-medium.en")
+            inputs = processor(raw_audio, return_tensors="pt", truncation=False, padding="longest", return_attention_mask=True, sampling_rate=16_000)
+            #print(inputs.shape)
+            
+            print("right before generation")
+            # Check and pad the mel spectrogram length to 3000 if necessary
+            mel_length = inputs.input_features.shape[2]  # Use shape[2] for the time dimension
+            if mel_length < 3000:
+                padding_length = 3000 - mel_length
+                padded_mel_features = torch.nn.functional.pad(inputs.input_features, (0, padding_length), mode='constant', value=0)
+                padded_attention_mask = torch.nn.functional.pad(inputs.attention_mask, (0, padding_length), mode='constant', value=0)
+                inputs['input_features'] = padded_mel_features  # Ensuring correct key assignment
+                inputs['attention_mask'] = padded_attention_mask  # Update the attention mask accordingly
 
-        # Debug print to verify shapes after padding
-        print("After padding - Features:", inputs.input_features.shape)
-        print("After padding - Mask:", inputs.attention_mask.shape)
-        inputs = inputs.to("cuda", torch.float16)
-        model_medium = WhisperForConditionalGeneration.from_pretrained("openai/whisper-medium.en", torch_dtype=torch.float16)
-        model_medium.to("cuda")
+            # Debug print to verify shapes after padding
+            print("After padding - Features:", inputs.input_features.shape)
+            print("After padding - Mask:", inputs.attention_mask.shape)
+            #inputs = inputs.to("cuda", torch.float16)
+            inputs = inputs.to(torch.float16)
+            model_medium = WhisperForConditionalGeneration.from_pretrained("openai/whisper-medium.en", torch_dtype=torch.float16)
+            #model_medium.to("cuda")
 
-        # activate `temperature_fallback` and repetition detection filters and condition on prev text
-        result = model_medium.generate(**inputs, condition_on_prev_tokens=False, temperature=0, logprob_threshold=-1.0, compression_ratio_threshold=1.35, return_timestamps=True)
-        #result = model_medium.generate(**inputs, condition_on_prev_tokens=False, temperature=(0.0, 0.2, 0.4, 0.6, 0.8, 1.0), logprob_threshold=-1.0, compression_ratio_threshold=1.35, return_timestamps=True)
+            # activate `temperature_fallback` and repetition detection filters and condition on prev text
+            result = model_medium.generate(**inputs, condition_on_prev_tokens=False, temperature=0, logprob_threshold=-1.0, compression_ratio_threshold=1.35, return_timestamps=True)
+            #result = model_medium.generate(**inputs, condition_on_prev_tokens=False, temperature=(0.0, 0.2, 0.4, 0.6, 0.8, 1.0), logprob_threshold=-1.0, compression_ratio_threshold=1.35, return_timestamps=True)
 
-        transcripts = processor.batch_decode(result, skip_special_tokens=True)
-        print(transcripts)
-        ret = [speaker + ": " + transcript for speaker, transcript in zip(speaker_list, transcripts)]
-        return_dict = { 'status' : 0,
-                        'transcript' : '\n'.join(ret),
-                        'language' : 'En'
-        }
+            transcripts = processor.batch_decode(result, skip_special_tokens=True)
+            print(transcripts)
+            ret = [speaker + ": " + transcript for speaker, transcript in zip(speaker_list, transcripts)]
+            return_dict = { 'status' : 0,
+                            'transcript' : '\n'.join(ret),
+                            'language' : 'En'
+            }
+        else:
+            transcripts = []
+            for audio in raw_audio:
+                transcripts.append(model.transcribe(audio)["text"])
+            ret = [speaker + ": " + transcript for speaker, transcript in zip(speaker_list, transcripts)]
+            return_dict = {
+            'status'        : 0,
+            'transcript'    : '\n'.join(ret),
+            'language'      : "En"
+            }
                        
     elif translate :
         # TODO: handle translation
