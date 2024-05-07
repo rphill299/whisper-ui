@@ -79,7 +79,7 @@ def batchedTranscribe():
         outputFolder = request.args.get('outputFolder')
         timestamp = saveTextOutputs(request.args.get('outputFolder'), filepaths, transcripts)
         return_dict['timestamp'] = timestamp
-        
+
     return return_dict
 
 @app.route('/single-transcribe/', methods = ['POST'])
@@ -203,13 +203,13 @@ def singleTranscribe():
                         'language' : 'En'
         }
                        
-    elif translate :
-        # TODO: handle translation
-        pass
     else :
-        # Simple transcribe
+        # Simple transcribe or translate
         audio = loadAudio(file)
-        ret = model.transcribe(audio)
+        if translate :
+            ret = model.transcribe(audio, task="translate")
+        else :
+            ret = model.transcribe(audio)
         return_dict = {'status'        : 0,
             'transcript'    : ret['text'],
             'language'      : ret['language']}

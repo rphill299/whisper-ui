@@ -122,7 +122,7 @@ function App() {
         axios.post(endpoint, 
             formData, 
             { headers: { 'Content-Type': 'multipart/form-data' },
-                params: {'saveOutputs': saveOutputs, "outputFolder": outputFolder, "diarize": useDiarization, "timestamp": timestamp.pop()}
+                params: {'saveOutputs': saveOutputs, "outputFolder": outputFolder, "diarize": useDiarization, "translate": useTranslation, "timestamp": timestamp.pop()}
             })
         .then((response) => { handleSequentialBackendResponse(response, trans, langs, timestamp)})
         .catch((error) => {handleNetworkErrors(error)})
