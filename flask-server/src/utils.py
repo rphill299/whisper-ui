@@ -56,3 +56,32 @@ def prepFiles(request):
         _files.append(_file)
         
     return filepaths, _files
+
+
+
+def configYaml(current_directory) :
+    embedding_path = join(current_directory, 'flask-server','src','embedding_model.bin')
+    segmentation_path = join(current_directory, 'flask-server', 'src', 'pytorch_model.bin')
+
+    text  = "version: 3.1.0\n\n"
+    text += "pipeline:\n"
+    text += "  name: pyannote.audio.pipelines.SpeakerDiarization\n"
+    text += "  params:\n"
+    text += "    clustering: AgglomerativeClustering\n"
+    text += '    embedding: "' + embedding_path + '"\n'
+    text += "    embedding_batch_size: 32\n"
+    text += "    embedding_exclude_overlap: true\n"
+    text += '    segmentation: "' + segmentation_path + '"\n'
+    text += "    segmentation_batch_size: 32\n\n"
+
+    text += "params:\n"
+    text += "  clustering:\n"
+    text += "    method: centroid\n"
+    text += "    min_cluster_size: 12\n"
+    text += "    threshold: 0.7045654963945799\n"
+    text += "  segmentation:\n"
+    text += "    min_duration_off: 0.0"
+
+    file = open(join(current_directory, 'flask-server','src','config.yaml'), "w")
+    file.write(text)
+    file.close()

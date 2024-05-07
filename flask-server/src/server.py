@@ -1,7 +1,7 @@
 from flask import Flask, request
 from flask_cors import CORS, cross_origin
 import sys
-from utils import loadAudio, saveTextOutputs, prepFiles, read_file_audiosegment, prepend_spacer
+from utils import loadAudio, saveTextOutputs, prepFiles, read_file_audiosegment, prepend_spacer, configYaml
 from os import getcwd, chdir
 from os.path import expanduser, join
 import os
@@ -22,6 +22,7 @@ chdir(join("..", ".."))
 CURR_DIR = getcwd() #project directory
 PROJ_DIR = CURR_DIR
 DEFAULT_OUTPUT_DIR = join("outputs","")
+configYaml(CURR_DIR)
 
 def millisec(timeStr):
   spl = timeStr.split(":")
