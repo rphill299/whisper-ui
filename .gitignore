@@ -13,3 +13,6 @@ __pycache__
 
 #ignore outputs
 outputs
+
+#ignore yaml config
+*.yaml
