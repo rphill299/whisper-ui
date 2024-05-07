@@ -71,15 +71,16 @@ def batchedTranscribe():
 
         transcripts = processor.batch_decode(result, skip_special_tokens=True)
 
+    return_dict = {'status'    : 0,
+            'transcripts': transcripts,
+            'languages'  : languages}
+
     if request.args.get('saveOutputs') == 'true' :
         outputFolder = request.args.get('outputFolder')
         timestamp = saveTextOutputs(request.args.get('outputFolder'), filepaths, transcripts)
+        return_dict['timestamp'] = timestamp
         
-    response = {'status'    : 0,
-            'transcripts': transcripts,
-            'languages'  : languages,
-            'timestamp' : timestamp}
-    return response
+    return return_dict
 
 @app.route('/single-transcribe/', methods = ['POST'])
 @cross_origin()
@@ -217,7 +218,6 @@ def singleTranscribe():
         outputFolder = request.args.get('outputFolder')
         TS = request.args.get('timestamp')
         timestamp = saveTextOutputs(outputFolder, [filepath], [ret['text']], timestamp=TS)
-    
-    return_dict['timestamp'] = timestamp
+        return_dict['timestamp'] = timestamp
     
     return return_dict
