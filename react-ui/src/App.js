@@ -341,6 +341,21 @@ function Inputs({enableTranscribe, handleChangeFiles, modelInUse, handleChangeMo
                 <input type='file' multiple directory={(inputMode==='folder')&&""} webkitdirectory={(inputMode==='folder')&&""} onChange={handleChangeFiles}/>
             </div>
             <div>
+                <label>
+                    <input type='checkbox' checked={saveOutputs} onChange={handleChangeSaveOutputs}/>
+                    Save all output
+                </label>
+                <label>
+                    <input 
+                        type='checkbox' checked={useDiarization} onChange={handleChangeUseDiarization}/>
+                    Diarization
+                </label>
+                <label>
+                    <input type='checkbox' checked={useTranslation} onChange={handleChangeUseTranslation}/>
+                    Translation
+                </label>
+            </div>
+            <div>
                 <button onClick={handleOptionsButtonClick}>{(optionsVisible ? "Hide " : "") + "Options"}</button>
                 {optionsVisible && (
                     <div>
@@ -349,33 +364,14 @@ function Inputs({enableTranscribe, handleChangeFiles, modelInUse, handleChangeMo
                             <HardwareRadioButton mode="GPU" disabled={!cudaAvailable}></HardwareRadioButton>
                             <HardwareRadioButton mode="CPU" disabled={false}></HardwareRadioButton>
                         </div>
+                        <div>
+                            <label>Output Folder: </label>
+                            <input type='text' defaultValue={outputFolder} onChange={handleChangeOutputFolder} disabled={!saveOutputs}/>
+                        </div>
                         {/* <div>  
                             <label>Model: </label> 
                             <ModelRadioButton model='Whisper'></ModelRadioButton>
                         </div> */}
-                        <div>
-                            Additional Functionality:
-                        </div>
-                        <div>
-                            <label>
-                                <input type='checkbox' checked={saveOutputs} onChange={handleChangeSaveOutputs}/>
-                                Save all output
-                            </label>
-                            <label>
-                                <input 
-                                    type='checkbox' checked={useDiarization} onChange={handleChangeUseDiarization}/>
-                                Diarization
-                            </label>
-                            <label>
-                                <input type='checkbox' checked={useTranslation} onChange={handleChangeUseTranslation}/>
-                                Translation
-                            </label>
-                        </div>
-                        {saveOutputs && 
-                            (<div>
-                                <label>Output Folder: </label>
-                                <input type='text' defaultValue={outputFolder} onChange={handleChangeOutputFolder}/>
-                            </div>)}
                     </div>
                 )}
             </div>
