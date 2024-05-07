@@ -1,10 +1,14 @@
 import io
 import librosa
+import sys
+from pydub import AudioSegment
 
 from os import makedirs
 from os.path import join, splitext, split
 
 from datetime import datetime
+
+PRINT_TO_CONSOLE = sys.stderr #print to this file within endpoints to print to console
 
 def loadAudio(file):
     buf = io.BytesIO(file.read())
@@ -14,13 +18,24 @@ def loadAudio(file):
     print(data[:100])
     return data
 
+def read_file_audiosegment(file):
+    return AudioSegment.from_wav(io.BytesIO(file.read()))
+
+def prepend_spacer(audio):
+    spacermilli = 2000
+    spacer = AudioSegment.silent(duration=spacermilli)
+    return spacer.append(audio, crossfade=0)
+
 # saves transcripts[i] with filename outputFolder+filepaths[i]
 # outputFolder: String - full path to output folder
 # filepaths: [String] - array of filepaths (including extensions)
 # transcripts: [String] - array of transcripts
-def saveTextOutputs(outputFolder, filepaths, transcripts) :
-    current_datetime = datetime.now().strftime("%Y-%m-%d-%H-%M-%S")
-    transcripts_id = str(current_datetime)
+def saveTextOutputs(outputFolder, filepaths, transcripts, *, timestamp='') :
+    if not timestamp:
+        current_datetime = datetime.now().strftime("%Y-%m-%d-%H-%M-%S")
+        transcripts_id = str(current_datetime)
+    else:
+        transcripts_id = timestamp
     for idx, fn in enumerate(filepaths):
         path, filename = split(fn)
         filepath = join(outputFolder, transcripts_id, path)
@@ -28,6 +43,7 @@ def saveTextOutputs(outputFolder, filepaths, transcripts) :
         file = open(join(filepath, filename), 'w+') #open file in write mode
         file.write(transcripts[idx])
         file.close()
+    return transcripts_id
         
 def prepFiles(request):
     filepaths = []

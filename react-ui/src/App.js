@@ -5,6 +5,7 @@ import Tab from "@material-ui/core/Tab";
 import Tabs from "@material-ui/core/Tabs";
 import axios from 'axios'
 
+
 // this is the default return value of App.js
 export default App;
 
@@ -12,34 +13,41 @@ export default App;
 function App() {
     // go to the return statement at the bottom of this function to see what an "App" is 
     // [ this_is_the_variable, this_is_the_setter ]
-
     const [files, setFiles] = useState([]) //stores return value of file selector
     const [outputHeader, setOutputHeader] = useState(); // gives output details
     const [outputFolder, setOutputFolder] = useState("Refresh once backend starts up")
+    const [cudaAvailable, setCudaAvailable] = useState()
     const [tabIndex, setTabIndex] = useState(0)
     const [transcripts, setTranscripts] = useState([])
-
     const [filenames, setFilenames] = useState([])
     const [model, setModel] = useState('Whisper'); //stores model in use
     const [inputMode, setInputMode] = useState('file') // determine 'file' vs. 'folder' select
     const [optionsVisible, setOptionsVisible] = useState(false) // toggle options
     const [saveOutputs, setSaveOutputs] = useState(false) // toggle whether outputs are auto-saved or not
     const [showLoadingSpinner, setShowLoadingSpinner] = useState(false)
-    const [processingMode, setProcessingMode] = useState("Batched") // Either 'Batched' or 'Sequential'
-    const [prevProcessing, setprevProcessing] = useState("") // tracks previous processing mode for consistency
+    const [hardware, setHardware] = useState() // Either 'GPU' or 'CPU'
     const [useDiarization, setUseDiarization] = useState(false)
     const [useTranslation, setUseTranslation] = useState(false)
+    const [timestamp, setTimestamp] = useState('')
     const [languages, setLanguages] = useState([])
     const [enableTranscribe, setEnableTranscribe] = useState(true)
+    const [hardwareMessage, setHardwareMessage] = useState("GPU Status: <Refresh once backend starts up>")
 
     /* Simple communication with backend here 
         obtaining default data folder from backend on app  init*/
     if (outputFolder === "Refresh once backend starts up") {
         axios.get('/init/').then((response) => {
+            // get data
             const data = response.data
+            // get a value from data ( stored as { 'outputFolder' : value } )
             const defaultOutputFolder = data.outputFolder
+            const ca = data.cudaAvailable
+            // do what we want with fetched value
             setOutputFolder(defaultOutputFolder)
-        }).catch((error) => {handleNetworkErrors(error)})
+            setCudaAvailable(ca === true)
+            setHardware(ca ? 'GPU' : 'CPU')
+            setHardwareMessage(ca ? 'GPU Status: Available' : 'GPU Status: Unvailable')
+        }).catch((error) => {handleNetworkErrors(error)}) // catch and report any network errors
     }
   
     /* ==========================================
@@ -47,11 +55,12 @@ function App() {
        ==========================================
     */
     function handleTranscribeButtonClick() {
-        if (!files || files.length === 0) {
+        // don't accept transcribe calls without inputs
+        if (!files || files.length === 0) { 
             alert("You must select a file to transcribe.")
             return
         }
-
+        // prep UI for processing request
         setOutputHeader("")
         setFilenames([])
         setTranscripts([])
@@ -60,55 +69,105 @@ function App() {
         setLanguages([])
         setEnableTranscribe(false)
 
-        if (model === "Wav2Vec2") {
-            const formData = new FormData();
-            for (let i=0; i<files.length; i++) {
-                formData.append(files[i].name, files[i]);
-            }
+        // get filenames from user selection
+        const allFilenames = Array.from(files).map((f) => f.name);
+        // filter out audio filenames
+        const audioFilenames = allFilenames.filter((fn) => isAudioFilename(fn))
+        const audioFiles = Array.from(files).filter((f) => isAudioFilename(f.name))
+        // set filenames and output header
+        setFilenames(audioFilenames)
+        setFiles(audioFiles)
+        setOutputHeader('Transcribing ' + audioFilenames.length + ' file' + (audioFilenames.length===1 ? '' : 's') + ' using ' + model + ':')
 
-            axios.post('/transcribe/', formData, {
-                headers: { 'Content-Type': 'multipart/form-data' }
-            }).then((response) => { handleBackendResponse(response)})
-            .catch((error) => {handleNetworkErrors(error)})
-        }
-        else if (model === "Whisper") {
-            const fns = Array.from(files).map(f => f.name);
-            const filenames = fns.filter((fn) => fn.endsWith(".wav") || fn.endsWith(".mp3") || fn.endsWith(".m4a")) // TODO: add all file extns whisper supports 
-            setFilenames(filenames)
-            setOutputHeader('Transcribing ' + filenames.length + ' file' + (filenames.length===1 ? '' : 's') + ' using ' + model + ':')
-            const formData = new FormData();
-            for (let i=0; i<files.length; i++) {
-                const fileName = fns[i];
-                if (fileName.endsWith(".mp3") || fileName.endsWith(".wav") || fileName.endsWith(".m4a")) {
-                    const fileRelPath = files[i].webkitRelativePath
-                    if (fileRelPath === '') { // means user passed files only
-                        formData.append(fileName, files[i]);
-                    } else { // means user passed a folder 
-                        formData.append(fileRelPath, files[i])
-                    }
-                } else {
-                    console.log("skipping " + fileName)
-                }
+        if (model === 'Whisper') {
+            if (hardware === 'GPU') {
+                batchedBackendTranscribeCall(audioFiles, audioFilenames)
+            } 
+            else if (hardware === 'CPU') {
+                sequentialTranscribeCall(audioFiles, audioFilenames, '/single-transcribe/')
             }
-            axios.post('/transcribe/', formData, {
-                headers: { 'Content-Type': 'multipart/form-data' },
-                params: {'saveOutputs': saveOutputs, "outputFolder": outputFolder}
-            }).then((response) => { handleBackendResponse(response)})
-            .catch((error) => {handleNetworkErrors(error)})
-            .finally(() => {setShowLoadingSpinner(false); setEnableTranscribe(true)})
         }
     }
 
-    function handleBackendResponse(response) {
+    function batchedBackendTranscribeCall(audioFiles, audioFilenames) {
+        // create form data storing raw files to pass to backend
+        const formData = createFormData(audioFiles, audioFilenames)
+        // send form data, along with params and proper headers, to backend, and handle response
+        axios.post('/batched-transcribe/', 
+            formData, 
+            { headers: { 'Content-Type': 'multipart/form-data' },
+                params: {'saveOutputs': saveOutputs, "outputFolder": outputFolder}
+            })
+        .then((response) => { handleBatchedBackendResponse(response)})
+        .catch((error) => {handleNetworkErrors(error)})
+        .finally(() => {endOfProcessing()})
+    }
+
+    function handleBatchedBackendResponse(response) {
         const data = response.data;
-        console.log("Backend Response:", data)
+        console.log("Batched Backend Response:", data)
         const status = data.status;
         if (status === 0) {
-            setTranscripts(data.transcript)
+            setTranscripts(data.transcripts)
             setLanguages(data.languages)
         } else {
             alert(status);
         }
+    }
+
+    function sequentialTranscribeCall(audioFiles, audioFilenames, endpoint, idx=0, trans=[], langs=[], timestamp=['']) {
+        // create form data storing raw files to pass to backend
+        const formData = createFormData([audioFiles[idx]], [audioFilenames[idx]])
+        // send form data, along with params and proper headers, to backend, and handle response
+        axios.post(endpoint, 
+            formData, 
+            { headers: { 'Content-Type': 'multipart/form-data' },
+                params: {'saveOutputs': saveOutputs, "outputFolder": outputFolder, "diarize": useDiarization, "translate": useTranslation, "timestamp": timestamp.pop()}
+            })
+        .then((response) => { handleSequentialBackendResponse(response, trans, langs, timestamp)})
+        .catch((error) => {handleNetworkErrors(error)})
+        .finally(() => {
+            if (idx === audioFiles.length-1) {
+                endOfProcessing()
+            } else {
+                sequentialTranscribeCall(audioFiles, audioFilenames, endpoint, idx+1, trans, langs, timestamp)
+            }
+        })
+    }
+
+    function handleSequentialBackendResponse(response, trans, langs, timestamp) {
+        const data = response.data;
+        console.log("Sequential Backend Response:", data)
+        const status = data.status;
+        if (status === 0) {
+            trans.push(data.transcript)
+            langs.push(data.language)
+            timestamp.push(data.timestamp)
+            setTranscripts(trans)
+            setLanguages(langs)
+        } else {
+            alert(status);
+        }
+    }
+    
+    // creates a new formdata object with raw (audio only) files
+    function createFormData(audioFiles, audioFilenames) {
+        const formData = new FormData()
+        for (let i=0; i<audioFiles.length; i++) {
+            const fileRelPath = audioFiles[i].webkitRelativePath
+            if (fileRelPath === '') { // means user passed files only
+                formData.append(audioFilenames[i], audioFiles[i]);
+            } else { // means user passed a folder 
+                formData.append(fileRelPath, audioFiles[i])
+            }
+        }
+        return formData
+    }
+
+    function endOfProcessing() {
+        setShowLoadingSpinner(false)
+        setEnableTranscribe(true)
+        setTimestamp('')
     }
 
     function handleNetworkErrors(error) {
@@ -128,6 +187,15 @@ function App() {
         console.log('Error', error.message);
         }
         console.log(error.config);
+    }
+
+    function isAudioFilename(filename) {
+        // return true if the file format is compatible for librosa.load() and whisper.transcribe()/whisper.translate()
+        // LIBROSA INCOMPATIBLE TYPES: .m4a, 
+        filename = filename.toLowerCase()
+        return  (filename.endsWith(".wav") ||
+            filename.endsWith(".mp3") 
+            )
     }
 
     function handleChangeOutputFolder(event) {
@@ -167,30 +235,16 @@ function App() {
         setSaveOutputs(!saveOutputs)
     }
 
-    function handleChangeProcessingMode(event) {
-        setProcessingMode(event.target.value)
+    function handleChangeHardware(event) {
+        setHardware(event.target.value)
     }
 
     function handleChangeUseDiarization(event) {
         setUseDiarization(event.target.checked)
-        handleTranslationDiarizationBatchedSequentialLogic(event.target.checked, useTranslation)
     }
 
     function handleChangeUseTranslation(event) {
         setUseTranslation(event.target.checked)
-        handleTranslationDiarizationBatchedSequentialLogic(event.target.checked, useDiarization)
-    }
-
-    function handleTranslationDiarizationBatchedSequentialLogic(checked, useOther) {
-        if (checked || useOther) {
-            if (prevProcessing === "") {
-                setprevProcessing(processingMode)
-                setProcessingMode('Sequential')
-            }
-        } else {
-            setProcessingMode(prevProcessing)
-            setprevProcessing("")
-        }
     }
 
     return (
@@ -214,14 +268,14 @@ function App() {
                     handleChangeSaveOutputs={handleChangeSaveOutputs}
                     outputFolder={outputFolder}
                     handleChangeOutputFolder={handleChangeOutputFolder}
-                    processingMode={processingMode}
-                    handleChangeProcessingMode={handleChangeProcessingMode}
+                    hardware={hardware}
+                    handleChangeHardware={handleChangeHardware}
                     useDiarization={useDiarization}
                     handleChangeUseDiarization={handleChangeUseDiarization}
                     useTranslation={useTranslation}
                     handleChangeUseTranslation={handleChangeUseTranslation}
                     >
-                </Inputs>      
+                </Inputs>
             </div>
             <div>
                 <Outputs 
@@ -234,14 +288,15 @@ function App() {
                     showLoadingSpinner={showLoadingSpinner}> 
                 </Outputs>
             </div>
+            <div className='statusBar'>{hardwareMessage}</div>
         </div>
     );
 }
 
 function Inputs({enableTranscribe, handleChangeFiles, modelInUse, handleChangeModel, handleTranscribeButtonClick, 
     inputMode, handleChangeInputMode, optionsVisible, handleOptionsButtonClick, saveOutputs, handleChangeSaveOutputs, outputFolder, handleChangeOutputFolder,
-    processingMode, handleChangeProcessingMode, useDiarization, handleChangeUseDiarization, useTranslation, handleChangeUseTranslation}) {
-
+    hardware, handleChangeHardware, useDiarization, handleChangeUseDiarization, useTranslation, handleChangeUseTranslation}) {
+    
     function ModelRadioButton({model}) {
         return (
             <>
@@ -262,13 +317,12 @@ function Inputs({enableTranscribe, handleChangeFiles, modelInUse, handleChangeMo
         );
     }
 
-    function ProcessingModeRadioButton({mode, disabled}) {
+    function HardwareRadioButton({mode}) {
         return (
             <>
-                <input id={mode} type='radio' name='processing' value={mode}  
-                    disabled={disabled}
-                    checked={mode === processingMode} 
-                    onChange={handleChangeProcessingMode}
+                <input id={mode} type='radio' name='hardware' value={mode}  
+                    checked={mode === hardware} 
+                    onChange={handleChangeHardware}
                     />
                 <label for={mode}>{mode}</label>
             </>
@@ -276,7 +330,7 @@ function Inputs({enableTranscribe, handleChangeFiles, modelInUse, handleChangeMo
     }
 
     return (
-        <fieldset>
+        <>
             <div>
                 <InputModeRadioButton mode="file" label={"I have a file"}></InputModeRadioButton>
                 <InputModeRadioButton mode="folder" label={"I have a folder"}></InputModeRadioButton>
@@ -289,44 +343,44 @@ function Inputs({enableTranscribe, handleChangeFiles, modelInUse, handleChangeMo
                 {optionsVisible && (
                     <div>
                         <div> 
-                            <label>Processing Mode:</label>
-                            <ProcessingModeRadioButton mode="Batched" disabled={useDiarization||useTranslation}></ProcessingModeRadioButton>
-                            <ProcessingModeRadioButton mode="Sequential" disabled={useDiarization||useTranslation}></ProcessingModeRadioButton>
+                            <label>Hardware:</label>
+                            <HardwareRadioButton mode="GPU"></HardwareRadioButton>
+                            <HardwareRadioButton mode="CPU"></HardwareRadioButton>
                         </div>
-                        <div>  
+                        {/* <div>  
                             <label>Model: </label> 
                             <ModelRadioButton model='Whisper'></ModelRadioButton>
-                            <ModelRadioButton model='Wav2Vec2'></ModelRadioButton> 
-                        </div>
+                        </div> */}
                         <div>
                             Additional Functionality:
                         </div>
                         <div>
                             <label>
-                                <input type='checkbox' checked={useDiarization} onChange={handleChangeUseDiarization}/>
-                                Diarization
-                            </label>
-                            <label>
-                                <input type='checkbox' checked={useTranslation} onChange={handleChangeUseTranslation}/>
-                                Translation
-                            </label>
-                            <label>
                                 <input type='checkbox' checked={saveOutputs} onChange={handleChangeSaveOutputs}/>
                                 Save all output
                             </label>
-                            {saveOutputs && 
+                            <label>
+                                <input 
+                                    type='checkbox' checked={useDiarization} onChange={handleChangeUseDiarization}/>
+                                Diarization
+                            </label>
+                            <label>
+                                <input type='checkbox' checked={useTranslation} onChange={handleChangeUseTranslation} disabled={hardware === 'GPU'}/>
+                                Translation
+                            </label>
+                        </div>
+                        {saveOutputs && 
                             (<div>
                                 <label>Output Folder: </label>
                                 <input type='text' defaultValue={outputFolder} onChange={handleChangeOutputFolder}/>
                             </div>)}
-                        </div>
                     </div>
                 )}
             </div>
             <div>
                 <button type='submit' onClick={handleTranscribeButtonClick} size="lg" disabled={!enableTranscribe}>Transcribe</button>
             </div>
-        </fieldset>
+        </>
     );
 }
 
@@ -337,7 +391,7 @@ function Outputs({outputHeader, tabIndex, handleChangeTab, transcripts, language
     }
     
     return outputHeader && (
-        <div>
+        <>
             <h3>
                 {outputHeader}
             </h3>
@@ -347,15 +401,14 @@ function Outputs({outputHeader, tabIndex, handleChangeTab, transcripts, language
                 </Tabs>
                 {(showLoadingSpinner && !transcripts[tabIndex]) && (<div class="loader"></div>)}
                 {transcripts[tabIndex] && NewlineText(transcripts[tabIndex])}
-                {!(!languages[tabIndex] || languages[tabIndex]==='n/a') && (<p>Language Detected: {languages[tabIndex]}</p>)}
+                {languages[tabIndex] && (<p>Language Detected: {languages[tabIndex]}</p>)}
             </Paper> 
-        </div>
+        </>
     );
 
      // text with newlines doesn't render properly in HTML; use this to put each newline into an html paragraph.
     function NewlineText(text) {
         const newText = text.split('\n').map(str => <p>{str}</p>)
-
         return newText
     }
 }
