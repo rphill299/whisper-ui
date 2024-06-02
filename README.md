@@ -1,5 +1,5 @@
-# Audio-Analyzer-and-Transcription-Tool
-End to end audio transcription and information extraction from audio input. 
+# WhisperUI
+UI for OpenAI's powerful audio transcriber WhisperAI
 
 ![image info](./images/tatl-app.png)
 
