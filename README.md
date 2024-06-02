@@ -1,7 +1,7 @@
 # Audio-Analyzer-and-Transcription-Tool
 End to end audio transcription and information extraction from audio input. 
 
-![image info](./bin/tatl-app.png)
+![image info](./images/tatl-app.png)
 
 ## Starting our Project
 1. Ensure you have the Required Dependencies listed below
