@@ -30,7 +30,7 @@ To run our code, the user must:
 - __Node.js installs__: all packages within react-ui/package-lock.json _("npm install")_
 - __Python3 installs__: numpy, flask, flask-cors, python-dotenv, torch, torchaudio, openai-whisper, soundfile, librosa, and https://github.com/huggingface/transformers
 
-_(node packages go into react-ui/node_modules/; python packages go into virtual environment created in flask-backend/src/.venv/; nothing outside of our project folder is touched)_
+_(node packages go into react-ui/node_modules/; python packages go into virtual environment created in flask-backend/src/.venv/; __nothing outside of our project folder is touched__)_
 
 ## Using our Product
 ### Transcribing a file/folder
