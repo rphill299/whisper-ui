@@ -1,4 +1,7 @@
 # WhisperUI
+
+See a problem? [Open an issue](https://github.com/rphill299/whisper-ui/issues/new)
+
 UI for OpenAI's powerful audio transcriber WhisperAI
 
 ![image info](./images/tatl-app.png)
