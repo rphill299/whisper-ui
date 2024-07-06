@@ -1,5 +1,9 @@
 # WhisperUI
 
+[[OpenAI's Whisper]](https://openai.com/index/whisper/)
+[[UMass Rescue Lab]](https://www.rescue-lab.org/)
+[[UMass Rescue GitHub]](https://github.com/UMass-Rescue)
+
 See a problem? [Open an issue](https://github.com/rphill299/whisper-ui/issues/new)
 
 UI for OpenAI's powerful audio transcriber WhisperAI
@@ -18,10 +22,10 @@ UI for OpenAI's powerful audio transcriber WhisperAI
 To run our code, the user must:
 1. Download our repo
 2. Install the latest versions of the following:
-    - Node.js
-    - python3
-    - pip3 _(if not included in your python3 download)_
-    - ffmpeg
+    - [Node.js](https://nodejs.org/en/download/prebuilt-installer); we recommend prebuilt install
+    - [python3](https://www.python.org/downloads/)
+    - [pip3](https://pip.pypa.io/en/stable/installation/) _(typically included in your python3 download)_
+    - [ffmpeg](https://www.ffmpeg.org/download.html)
 3. Install additional dependencies listed below.  To let our scripts do this for you automatically, open your terminal, navigate to our main project directory _(Audio-Analyzer-and-Transcription-Tool)_ and type:
     #### macOS/Linux:
     sh scripts/setup.sh
