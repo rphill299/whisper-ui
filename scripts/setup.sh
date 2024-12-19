@@ -22,7 +22,7 @@ python3 -m venv .venv
 # activate virtual environment
 source .venv/bin/activate
 # install flask and flask-cors in v.env.
-python3 -m pip install -U numpy flask flask-cors python-dotenv torch torchaudio openai-whisper soundfile librosa pyannote.audio pydub
+python3 -m pip install -U "numpy<2.0" flask flask-cors python-dotenv torch torchaudio openai-whisper soundfile librosa pyannote.audio pydub
 python3 -m pip install git+https://github.com/huggingface/transformers
 # deactivate v.env.
 deactivate

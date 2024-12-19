@@ -19,7 +19,7 @@ rem Activate virtual environment
 call .venv\Scripts\activate.bat
 
 rem Install flask and flask-cors in v.env.
-python -m pip install -U numpy flask flask-cors python-dotenv torch torchaudio openai-whisper soundfile librosa pyannote.audio pydub
+python -m pip install -U "numpy<2.0" flask flask-cors python-dotenv torch torchaudio openai-whisper soundfile librosa pyannote.audio pydub
 
 rem Install transformers from GitHub
 python -m pip install git+https://github.com/huggingface/transformers
