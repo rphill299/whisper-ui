@@ -1,0 +1,26 @@
+name: whisper-ui
+channels:
+  - conda-forge
+  - pytorch
+dependencies:
+  - python
+  - llvmlite
+  - numba
+  - numpy<2.0
+  - pytorch
+  - torchaudio
+  - pip
+  - pip:
+      - flask
+      - flask-cors
+      - python-dotenv
+      - openai-whisper
+      - soundfile
+      - librosa
+      - pydub
+      - pyannote.audio
+      - git+https://github.com/huggingface/transformers
+
+
+# python3 -m pip install -U "numpy<2.0" flask flask-cors python-dotenv torch torchaudio openai-whisper soundfile librosa pyannote.audio pydub
+# python3 -m pip install git+https://github.com/huggingface/transformers

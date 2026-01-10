@@ -18,7 +18,7 @@
   },
   "scripts": {
     "start": "concurrently \"react-scripts start\" \"npm run start-api\"",
-    "start-api": "cd ../flask-server/src && .venv/bin/flask run",
+    "start-api": "cd ../flask-server/src && python -m flask run",
     "build": "react-scripts build",
     "test": "react-scripts test",
     "eject": "react-scripts eject"
