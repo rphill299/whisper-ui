@@ -6,11 +6,12 @@
 
 See a problem? [Open an issue](https://github.com/rphill299/whisper-ui/issues/new)
 
-UI for OpenAI's powerful audio transcriber WhisperAI
+UI for OpenAI's powerful audio transcriber WhisperAI.
 
 ![image info](./images/tatl-app.png)
 
 ## Starting our Project
+0. _Currently only works for MacOS, Windows support coming soon!_
 1. Ensure you have the Required Dependencies listed below
 2. Open your terminal, navigate to our main project directory _(Audio-Analyzer-and-Transcription-Tool)_ and type:
     #### macOS/Linux:
@@ -23,19 +24,18 @@ To run our code, the user must:
 1. Download our repo
 2. Install the latest versions of the following:
     - [Node.js](https://nodejs.org/en/download/prebuilt-installer); we recommend prebuilt install
-    - [python3](https://www.python.org/downloads/)
-    - [pip3](https://pip.pypa.io/en/stable/installation/) _(typically included in your python3 download)_
+    - [Anaconda](https://www.anaconda.com/download/success)
     - [ffmpeg](https://www.ffmpeg.org/download.html)
 3. Install additional dependencies listed below.  To let our scripts do this for you automatically, open your terminal, navigate to our main project directory _(Audio-Analyzer-and-Transcription-Tool)_ and type:
-    #### macOS/Linux:
+    ##### macOS/Linux:
     sh scripts/setup.sh
-    #### Windows:
+    ##### Windows:
     scripts/setup
 
-### setup.sh automatically downloads the following:
+    ##### Additional dependencies automatically installed by setup scripts:
 
-- __Node.js installs__: all packages within react-ui/package-lock.json _("npm install")_
-- __Python3 installs__: numpy, flask, flask-cors, python-dotenv, torch, torchaudio, openai-whisper, soundfile, librosa, and https://github.com/huggingface/transformers
+    - __Node.js installs__: all packages within react-ui/package-lock.json _("npm install")_
+    - __Python3 installs__: numpy, flask, flask-cors, python-dotenv, torch, torchaudio, openai-whisper, soundfile, librosa, and https://github.com/huggingface/transformers
 
 _(node packages go into react-ui/node_modules/; python packages go into virtual environment created in flask-backend/src/.venv/; __nothing outside of our project folder is touched__)_
 
@@ -45,8 +45,8 @@ Easily select a file or folder with our file selection dialog, then click Transc
 ### Choosing options
 By default, the selected files are sent for batched transcription, which is the fastest option available if you have GPU access.  However, we provide several optional features which can help significantly in certain circumstances:
 ### Saving Outputs
-Select the Save Outputs checkbox when in GPU mode to automatically save each transcript in a designated output folder; CPU support coming soon.  Output folder path can be a fully qualified path to a new location, or simply a folder name, which will be placed in the project directory folder.
+Select the Save Outputs checkbox to automatically save each transcript in a designated output folder.  Output folder path can be a fully qualified path to a new location, or simply a folder name, which will be placed in the project directory folder.
 ### Diarization
-_coming soon_
+__Currently only supported if GPU available; unable to test further with current hardware.__ Simply check the Diarization check box before transcribing your audio.  Audio inputs with multiple speakers have each speaker's words assigned to them, so you know which speaker says what.
 ### Translation
-_coming soon_
+Simply check the Translation check box before transcribing your audio.  Audio inputs of any language are translated to English (currently only English supported).
